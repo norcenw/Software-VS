@@ -1,0 +1,179 @@
+header {
+  background: transparent;
+  position: fixed;
+  width: 100%;
+  height: 100px !important;
+  top: 0;
+  left: 0;
+  border-bottom: 1px solid #096cd5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  box-shadow: 0 0 8px 0 #000000;
+
+  .left-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    img[src="../dist/resources/img/logo_vertistock.png"] {
+      width: 100px;
+      height: 100px;
+    }
+
+    img[src="../dist/resources/img/dark.png"],
+    img[src="../dist/resources/img/light.png"] {
+      height: 70px;
+    }
+
+    p {
+      color: #fff;
+      position: absolute;
+      bottom: 0;
+      left: 20px;
+      font-size: 12px;
+    }
+  }
+
+  .right-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    height: 100%;
+
+    .header-toggle-title {
+      color: #ffffff;
+      position: absolute;
+      top: -100%;
+      right: 50%;
+      transition: top 0.5s ease;
+      transform: translate(-50%, -50%);
+      width: 220px;
+      text-align: end;
+      padding-right: 20px;
+      font-weight: 700;
+    }
+
+    .header-toggle-title.slide-top {
+      top: 50%;
+    }
+
+    .box {
+      padding: 5px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:last-child {
+        margin-right: 20px;
+      }
+
+      #cls-7 {
+        stroke: #ffd214;
+      }
+
+      img {
+        height: 100%;
+      }
+
+      #wifi {
+        display: none;
+      }
+
+      #nowifi {
+        display: flex;
+      }
+    }
+
+    .box:last-child {
+      margin-right: 20px;
+    }
+
+    .box.connected {
+      #cls-7 {
+        stroke: #28a745 !important;
+      }
+    }
+
+    p {
+      color: #fff;
+      position: absolute;
+      font-size: 12px;
+      width: 100px;
+      text-align: center;
+    }
+
+    #rssi {
+      bottom: 0;
+      right: 0;
+    }
+
+    #info-wifi {
+      bottom: 0;
+      right: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: column;
+
+      div {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+}
+
+.bottom-header {
+  width: 100%;
+  padding: 20px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: absolute;
+  top: 100px;
+  left: 0;
+  font-size: 15px;
+
+  #ai-toggle {
+    border: none;
+    outline: none;
+    padding: 2px 15px;
+    background-color: transparent;
+    border: 2px solid #ec7900;
+    color: #ffffff;
+    border-radius: 3px;
+    transition: border 0.2s, color 0.2s;
+
+    &:active {
+      transform: scale(0.95);
+    }
+
+    &:hover {
+      border: 2px solid #076bd5 !important;
+      color: #076bd5;
+    }
+  }
+
+  #languageSwitcher {
+    border: none;
+    outline: none;
+    background-color: transparent;
+    border-bottom: 2px solid #ec7900;
+    color: #ec7900;
+
+    option {
+      background-color: white;
+      color: #000000;
+      border: 1px solid #ec7900;
+    }
+  }
+}

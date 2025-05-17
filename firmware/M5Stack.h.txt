@@ -1,0 +1,79 @@
+#include <M5Stack.h>
+#include "Module_Stepmotor.h" // Assicurati che la libreria sia corretta per il modulo HR8825
+
+// Definizione dei pin per i quattro motori
+#define MOTOR_1_STEP_PIN    2
+#define MOTOR_1_DIR_PIN     3
+#define MOTOR_1_ENABLE_PIN  4
+
+#define MOTOR_2_STEP_PIN    5
+#define MOTOR_2_DIR_PIN     6
+#define MOTOR_2_ENABLE_PIN  7
+
+#define MOTOR_3_STEP_PIN    8
+#define MOTOR_3_DIR_PIN     9
+#define MOTOR_3_ENABLE_PIN  10
+
+#define MOTOR_4_STEP_PIN    11
+#define MOTOR_4_DIR_PIN     12
+#define MOTOR_4_ENABLE_PIN  13
+
+// Crea istanze del driver per i motori
+Module_Stepmotor motor1;
+Module_Stepmotor motor2;
+Module_Stepmotor motor3;
+Module_Stepmotor motor4;
+
+void setup() {
+    // Inizializzazione del M5Stack
+    M5.begin();
+
+    // Configurazione dei pin per i motori (usiamo i pin 2-13)
+    pinMode(MOTOR_1_STEP_PIN, OUTPUT);
+    pinMode(MOTOR_1_DIR_PIN, OUTPUT);
+    pinMode(MOTOR_1_ENABLE_PIN, OUTPUT);
+
+    pinMode(MOTOR_2_STEP_PIN, OUTPUT);
+    pinMode(MOTOR_2_DIR_PIN, OUTPUT);
+    pinMode(MOTOR_2_ENABLE_PIN, OUTPUT);
+
+    pinMode(MOTOR_3_STEP_PIN, OUTPUT);
+    pinMode(MOTOR_3_DIR_PIN, OUTPUT);
+    pinMode(MOTOR_3_ENABLE_PIN, OUTPUT);
+
+    pinMode(MOTOR_4_STEP_PIN, OUTPUT);
+    pinMode(MOTOR_4_DIR_PIN, OUTPUT);
+    pinMode(MOTOR_4_ENABLE_PIN, OUTPUT);
+
+    // Inizializzazione dei motori
+    motor1.init(MOTOR_1_STEP_PIN, MOTOR_1_DIR_PIN, MOTOR_1_ENABLE_PIN);
+    motor2.init(MOTOR_2_STEP_PIN, MOTOR_2_DIR_PIN, MOTOR_2_ENABLE_PIN);
+    motor3.init(MOTOR_3_STEP_PIN, MOTOR_3_DIR_PIN, MOTOR_3_ENABLE_PIN);
+    motor4.init(MOTOR_4_STEP_PIN, MOTOR_4_DIR_PIN, MOTOR_4_ENABLE_PIN);
+}
+
+void loop() {
+    // Movimento in avanti per il motore 1
+    motor1.setSpeed(200);  // Imposta la velocità
+    motor1.step(200);      // Muovi il motore di 200 passi
+
+    delay(1000); // Aspetta un secondo
+
+    // Movimento indietro per il motore 2
+    motor2.setSpeed(200);  // Imposta la velocità
+    motor2.step(-200);     // Muovi il motore di -200 passi
+
+    delay(1000); // Aspetta un secondo
+
+    // Movimento in avanti per il motore 3
+    motor3.setSpeed(200);  // Imposta la velocità
+    motor3.step(200);      // Muovi il motore di 200 passi
+
+    delay(1000); // Aspetta un secondo
+
+    // Movimento indietro per il motore 4
+    motor4.setSpeed(200);  // Imposta la velocità
+    motor4.step(-200);     // Muovi il motore di -200 passi
+
+    delay(1000); // Aspetta un secondo
+}

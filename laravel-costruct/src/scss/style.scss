@@ -1,0 +1,208 @@
+@use "sass:list";
+@use "sass:math";
+@import "_partials/_variables.scss";
+@import "_partials/_header.scss";
+@import "_partials/_view-arduino-main.scss";
+@import "_partials/_footer.scss";
+@import "_partials/_background.scss";
+@import "_partials/_warehouse.scss";
+@import "_partials/_arduino-control.scss";
+@import "_partials/_log.scss";
+@import "_partials/_ai.scss";
+@import "_partials/qr-code";
+@import "_partials/_pop-up.scss";
+@import "_partials/_common.scss";
+@import "_partials/_media-query.scss";
+
+#layover {
+  display: none;
+  position: absolute;
+  z-index: 101;
+  background-color: #000000;
+  opacity: 0.8;
+  width: 100vw;
+  height: 100vh;
+}
+
+#animation-loading {
+  display: none;
+  transform: translate(-50%, -50%);
+  position: absolute;
+  z-index: 102;
+  top: 50%;
+  left: 50%;
+  width: 600px;
+}
+
+#animation-state {
+  display: none;
+  transform: translate(-50%, -50%);
+  position: absolute;
+  z-index: 102;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+}
+
+#text-lottie {
+  transform: translate(-50%, -50%);
+  position: absolute;
+  z-index: 102;
+  top: calc(50% + 100px);
+  left: 50%;
+  font-size: 25px;
+  color: #fff;
+  font-family: "Red Hat Display", sans-serif;
+  width: 80%;
+  text-align: center;
+  overflow: auto;
+  max-height: 100px;
+}
+
+button {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 20px;
+    margin-right: 5px;
+  }
+}
+
+/* Nascondere la scrollbar per tutti gli elementi */
+* {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* Internet Explorer 10+ */
+}
+
+*::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Edge */
+}
+
+.data-tooltip-container {
+  width: 15px;
+  height: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.custom-tooltip {
+  position: absolute;
+  z-index: 9999;
+  max-width: 300px;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  padding: 10px;
+  background: #333;
+  color: #fff;
+  border-radius: 3px;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.custom-tooltip.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.custom-tooltip::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+}
+
+.custom-tooltip.right-position::after {
+  left: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: #333;
+}
+
+.custom-tooltip.left-position::after {
+  right: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: #333;
+}
+
+#toggle-container {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+
+  p{
+    color: #fff;
+    margin-right: 15px;
+  }
+
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+  }
+
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 5px;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 24px;
+    width: 24px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 3px;
+  }
+
+  input:checked+.slider {
+    background-color: #27a644;
+  }
+
+  input:checked+.slider:before {
+    transform: translateX(30px);
+  }
+
+  input:checked+.slider:active:before {
+    transform: translateX(30px) scale(0.9);
+  }
+
+  input:not(:checked)+.slider:active:before {
+    transform: scale(0.9);
+  }
+}

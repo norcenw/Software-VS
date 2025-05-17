@@ -1,0 +1,335 @@
+#main-1 {
+  color: #ffffff;
+  width: 100%;
+  height: calc(100% - 300px);
+  overflow-y: auto;
+
+  .arduino-control-title {
+    font-size: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 50px 10%;
+  }
+
+  .count-wifi {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10%;
+    padding-bottom: 5px;
+
+    .count-tooltip{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    >div {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 2px solid #ec7900;
+      padding: 5px 20px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border 0.2s, color 0.2s;
+
+      >img {
+        margin-left: 5px;
+        width: 20px;
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      &:hover {
+        border: 2px solid #076bd5 !important;
+        color: #076bd5;
+      }
+    }
+  }
+
+  .arduino-control-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 0 10%;
+
+    .arduino-control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 10px 0;
+
+      .title-arduino-control {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 25%;
+        font-size: 17px;
+        text-align: center;
+      }
+
+      .input-arduino-control {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 25%;
+
+        .input-arduino {
+          border: none;
+          outline: none;
+          padding: 10px 20px;
+          font-size: 20px;
+          text-align: center;
+          color: #ffffff;
+          border-radius: 3px;
+          border: 1px solid #ed7900;
+          width: 80%;
+          transition: 0.3s;
+          box-shadow: 7px 7px 0 0 rgba(237, 121, 0, 0.7);
+          background-color: transparent;
+          color: #ffffff;
+          font-weight: 700;
+        }
+
+        textarea:focus,
+        input:focus,
+        .uneditable-input:focus {
+          border-color: #076bd5;
+        }
+
+        select {
+          padding: 10px 20px;
+          font-size: 20px;
+          /*creare variabile*/
+          text-align: center;
+          color: #ffffff;
+          border-radius: 3px;
+          /*da controllare*/
+          border: 1px solid #ed7900;
+          width: 80%;
+          transition: 0.3s;
+          box-shadow: 7px 7px 0 0 rgba(237, 121, 0, 0.7);
+          background-color: transparent;
+          color: #ffffff;
+          font-weight: 700;
+
+          option {
+
+            background-color: #fff;
+            color: #000;
+            border: 1px solid #ed7900;
+            text-align: center;
+            padding: $padding-20px;
+            font-size: 20px;
+            font-weight: 700;
+          }
+        }
+      }
+    }
+
+    #wifi-list {
+      width: 100%;
+      border: 2px solid #ec7900;
+      padding: 10px;
+      border-radius: 3px;
+      min-height: 300px;
+      max-height: 300px;
+      overflow-y: auto;
+
+      .wifi-item {
+        padding: 10px;
+        margin: 5px 0;
+        margin-top: 5px;
+        background-color: transparent;
+        border: 1px solid #ec7900;
+        border-radius: 3px;
+        cursor: grab;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        p {
+          width: 25px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+        }
+
+        >div {
+          width: calc((100% - 25px) / 3);
+          ;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+
+          input {
+            width: 80%;
+            border: none;
+            outline: none;
+            text-align: center;
+            color: #ffffff;
+            border-bottom: 1px solid #ed7900;
+            transition: 0.3s;
+            background-color: transparent;
+            color: #ffffff;
+            font-weight: 700;
+            cursor: input;
+          }
+
+          input.no-drag {
+            opacity: 0.6;
+            cursor: grab;
+            pointer-events: none;
+          }
+
+          >img {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            right: 0;
+            top: 50%;
+            width: 20px;
+            cursor: pointer;
+          }
+
+          >img#show-password {
+            display: flex;
+          }
+
+          >img#hide-password {
+            display: none;
+          }
+        }
+
+        .wifi-mod {
+          width: calc((100% - 25px) / 3);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          >img {
+            position: unset;
+            transform: translate(0, 0);
+            width: 20px;
+            padding: 3px;
+            cursor: grab;
+          }
+
+          >div {
+            img {
+              width: 20px;
+              cursor: pointer;
+            }
+
+            img:first-child {
+              margin-right: 10px;
+            }
+          }
+        }
+      }
+
+      .wifi-item.dragging {
+        opacity: 1;
+        background-color: transparent;
+      }
+
+      .wifi-item:first-child {
+        margin-top: 0;
+      }
+
+      .wifi-item:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .button-arduino-container {
+    padding-top: 20px;
+
+    button {
+      border: none;
+      outline: none;
+      padding: 10px 40px;
+      background-color: transparent;
+      border: 2px solid #ec7900;
+      color: #ffffff;
+      border-radius: 3px;
+      transition: border 0.2s, color 0.2s;
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      &:hover {
+        border: 2px solid #076bd5 !important;
+        color: #076bd5;
+      }
+    }
+  }
+
+  .banner-reset {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 60%;
+    height: 60%;
+    padding: 10%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    border: 2px solid #ec7900;
+    border-radius: 3px;
+    background: radial-gradient(ellipse at center, #0d1d31 0%, #0c0d13 100%);
+    transform: translate(-50%, -50%);
+    z-index: 102;
+    display: none;
+  }
+
+  .banner-title {
+    font-size: 40px;
+    padding: 10%;
+  }
+
+  .button-arduino-reset {
+    width: 100%;
+    padding: 0 10%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    button {
+      width: 150px;
+      border: none;
+      outline: none;
+      padding: 10px 40px;
+      color: #ffffff;
+      background-color: transparent;
+      border-radius: 3px;
+      transition: border 0.2s, color 0.2s;
+    }
+
+    #close {
+      border: 2px solid #fe0808;
+
+      &:hover {
+        background-color: #fe0808;
+      }
+    }
+
+    #restart {
+      border: 2px solid #28a745;
+
+      &:hover {
+        background-color: #28a745;
+      }
+    }
+  }
+}

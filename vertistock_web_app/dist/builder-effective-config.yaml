@@ -1,0 +1,21 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.vertistock.app
+productName: VertiStock
+files:
+  - filter:
+      - '!webpack.mix.js'
+      - '!node_modules/laravel-mix'
+      - '!src/'
+win:
+  target: nsis
+  icon: assets/icon.ico
+nsis:
+  oneClick: false
+  perMachine: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: VertiStock
+electronVersion: 33.3.1

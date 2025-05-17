@@ -1,0 +1,44 @@
+name: vertistock
+description: "App per controllo di magazzino automatico"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_svg: ^2.0.17
+  mobile_scanner: ^6.0.3
+  http: ^1.3.0
+  dnsolve: ^1.0.0
+  permission_handler: ^11.3.1
+  multicast_dns: ^0.3.2+7
+  lottie: ^3.3.1
+  flutter_launcher_icons: ^0.14.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/img/
+    - assets/lottie/
+
+  fonts:
+    - family: RedHat
+      fonts:
+        - asset: assets/fonts/RedHatDisplay-Regular.ttf
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#0D1D31"

@@ -1,0 +1,217 @@
+@media only screen and (min-width: 320px) and (max-width: 480px) {
+  .login-main {
+    width: 80%;
+    margin: 0 10%;
+  }
+
+  .login-container {
+    width: 90vw;
+  }
+
+  .login-left {
+    width: 50%;
+  }
+
+  .login-left div {
+    padding: 12px 12px 2px 12px !important;
+    margin-bottom: 18px;
+  }
+
+  .login-right {
+    width: 50%;
+  }
+
+  .login-right input {
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .login-right:first-child {
+    margin-bottom: 10px;
+  }
+
+  header .right-header .box {
+    width: 50px;
+    height: 50px;
+    font-size: 6px;
+    margin-right: 5px;
+  }
+
+  #header-title {
+    font-size: 20px !important;
+  }
+
+  header .right-header .header-toggle-title {
+    font-size: 15px;
+    padding-right: 5px;
+  }
+
+  .view-main select {
+    width: 100%;
+  }
+
+  .view-main .engine-container .engine-row {
+    flex-wrap: wrap;
+  }
+
+  .view-main .engine-container .engine-row .input-read-only:first-child {
+    margin-right: 0 !important;
+  }
+
+  #main-2
+    .arduino-control-container
+    .arduino-control-row
+    .title-arduino-control {
+    font-size: 12px;
+  }
+
+  #main-2 .arduino-control-container{
+    padding: 0 5%;
+  }
+
+  #main-3 .warehouse {
+    flex-wrap: wrap;
+  }
+
+  #main-3 .warehouse .left-warehouse {
+    width: 100%;
+    margin: 0 15px;
+    margin-top: 120px;
+  }
+
+  #main-3 .warehouse .right-warehouse {
+    width: 100%;
+    margin: 0 15px;
+    margin-top: 20px;
+  }
+
+  .switch-main {
+    padding: 0 3%;
+  }
+
+  footer div p {
+    font-size: 10px;
+  }
+
+  header .left-header img {
+    margin: 5px;
+  }
+
+  header .left-header #header-title {
+    padding: 5px;
+  }
+}
+@media only screen and (min-width: 480px) and (max-width: 768px) {
+  .login-main {
+    width: 80vw;
+    margin: 0 10%;
+  }
+
+  .login-container {
+    width: 90vw;
+  }
+
+  .login-left {
+    width: 50%;
+  }
+
+  .login-left div {
+    padding: 12px 12px 2px 12px !important;
+    margin-bottom: 18px;
+  }
+
+  .login-right {
+    width: 50%;
+  }
+
+  .login-right input {
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .login-right:first-child {
+    margin-bottom: 10px;
+  }
+
+  header .right-header .box {
+    width: 50px;
+    height: 50px;
+    font-size: 6px;
+    margin-right: 5px;
+  }
+
+  #header-title {
+    font-size: 20px !important;
+  }
+
+  header .right-header .header-toggle-title {
+    font-size: 15px;
+    padding-right: 5px;
+  }
+
+  .view-main select {
+    width: 100%;
+  }
+
+  .view-main .engine-container .engine-row {
+    flex-wrap: wrap;
+  }
+
+  .view-main .engine-container .engine-row .input-read-only:first-child {
+    margin-right: 0 !important;
+  }
+
+  #main-2
+    .arduino-control-container
+    .arduino-control-row
+    .title-arduino-control {
+    font-size: 12px;
+  }
+
+  #main-3 .warehouse {
+    flex-wrap: wrap;
+  }
+
+  #main-3 .warehouse .left-warehouse {
+    width: 100%;
+    margin: 0 15px;
+  }
+
+  #main-3 .warehouse .right-warehouse {
+    width: 100%;
+    margin: 0 15px;
+  }
+
+  .switch-main {
+    padding: 0 3%;
+  }
+
+  footer div p {
+    font-size: 10px;
+  }
+
+  header .left-header img {
+    margin: 5px;
+  }
+
+  header .left-header #header-title {
+    padding: 5px;
+  }
+}
+@media only screen and (min-width: 768px) {
+  #main-3 .toggle-warehouse {
+    display: none;
+  }
+
+  #main-3 .warehouse .left-warehouse {
+    display: flex !important;
+  }
+
+  #main-3 .warehouse .right-warehouse {
+    display: flex !important;
+  }
+}

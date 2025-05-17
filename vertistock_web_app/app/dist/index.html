@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="../dist/css/style.css" />
+  <link rel="background" ref="https://cdn.jsdelivr.net/gh/alphardex/aqua.css@master/dist/aqua.min.css" />
+  <link rel="icon" href="../dist/resources/logo_vertistock.ico" type="image/x-icon" />
+  <link href="https://fonts.googleapis.com/css?family=Raleway:400,500,300" rel="stylesheet" type="text/css" />
+  <title>VertiStock</title>
+  <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.149.0/examples/jsm/"
+        }
+    }
+  </script>
+  <script src="../dist/resources/library/lottie.min.js"></script>
+  <script src="../dist/resources/library/qrcode.min.js"></script>
+  <script src="../dist/resources/library/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/eoussama/translator.js@master/dist/translator.min.js"></script>
+  <script type="module" src="js/dict.js"></script>
+  <script type="module" src="js/3d.js"></script>
+  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/ai.js"></script>
+</head>
+
+<body>
+  <header>
+    <div class="left-header">
+      <img src="../dist/resources/img/logo_vertistock.png" alt="logo-vertistock.png" />
+      <img src="../dist/resources/img/dark.png" alt="dark.png" />
+      <img src="../dist/resources/img/light.png" alt="light.png" class="d-none" />
+      <p eo-translator="version"></p>
+    </div>
+    <div class="right-header">
+      <h2 id="title-0" class="header-toggle-title" eo-translator="arduino view"></h2>
+      <h2 id="title-1" class="header-toggle-title" eo-translator="arduino control"></h2>
+      <h2 id="title-2" class="header-toggle-title slide-top" eo-translator="warehouse"></h2>
+      <h2 id="title-3" class="header-toggle-title" eo-translator="qr code"></h2>
+      <h2 id="title-4" class="header-toggle-title" eo-translator="log"></h2>
+      <div class="box" id="wifi-animation">
+        <img src="../dist/resources/img/wifi.svg" alt="wifi.svg" id="wifi" class="m-b-20" />
+        <img src="../dist/resources/img/no-wifi.svg" alt="no-wifi.svg" id="nowifi" class="m-b-20" />
+      </div>
+      <div class="box" id="arduino-connect">
+        <img src="../dist/resources/img/low-stream.svg" alt="no-wifi.svg" id="low-stream" style="display: none;" />
+        <img src="../dist/resources/img/mid-stream.svg" alt="no-wifi.svg" id="mid-stream" style="display: none;" />
+        <img src="../dist/resources/img/high-stream.svg" alt="no-wifi.svg" id="high-stream" style="display: none;" />
+        <img src="../dist/resources/img/no-stream.svg" alt="no-stream.svg" id="no-stream" style="display: flex;" />
+      </div>
+      <p id="rssi">No Stream</p>
+      <p id="info-wifi">Empty</p>
+    </div>
+  </header>
+  <div class="bottom-header">
+    <div id="toggle-container">
+      <p eo-translator="toggle real time"></p>
+      <label class="toggle-switch">
+        <input type="checkbox" id="real-time">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div></div>
+    <button id="ai-toggle" eo-translator="ai help" style="display: none;"></button>
+    <select id="languageSwitcher">
+      <option value="en" selected>English</option>
+      <option value="it">Italiano</option>
+      <option value="ru">Русский</option>
+      <option value="fr">Français</option>
+      <option value="cn">中文普通话</option>
+      <option value="es">Español</option>
+      <option value="pt">Português</option>
+      <option value="de">Deutsch</option>
+    </select>
+  </div>
+  <main class="view-main" id="main-0">
+    <div class="container-motor">
+      <div id="motor-x" class="three-img"></div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="delay tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="delay tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="delay"></label>
+        <div class="input-unit-container">
+          <input type="text" name="xdelay-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="μstep tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="μstep tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="μstep"></label>
+        <div class="input-unit-container">
+          <select name="xacc-read">
+            <option value="0">FULL</option>
+            <option value="1">1/2</option>
+            <option value="2">1/4</option>
+            <option value="3">1/8</option>
+            <option value="4">1/16</option>
+            <option value="5">1/32</option>
+          </select>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="speed tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="speed tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="speed"></label>
+        <div class="input-unit-container">
+          <input type="text" name="xspeed-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="time tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="time tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="time"></label>
+        <div class="input-unit-container">
+          <input type="text" name="xtime-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="max step tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="max step tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="max step"></label>
+        <div class="input-unit-container">
+          <input type="text" name="xstep-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="coordinate tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="coordinate tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="coordinate"></label>
+        <div class="input-unit-container">
+          <input type="text" name="xcoordinate-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="run tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="run tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="run"></label>
+        <div class="input-unit-container">
+          <input type="text" name="xrun-read" disabled>
+        </div>
+      </div>
+    </div>
+    <div class="container-motor m-l-50 m-r-50">
+      <div id="motor-y" class="three-img"></div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="delay tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="delay tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="delay"></label>
+        <div class="input-unit-container">
+          <input type="text" name="ydelay-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="μstep tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="μstep tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="μstep"></label>
+        <div class="input-unit-container">
+          <select name="yacc-read">
+            <option value="0">FULL</option>
+            <option value="1">1/2</option>
+            <option value="2">1/4</option>
+            <option value="3">1/8</option>
+            <option value="4">1/16</option>
+            <option value="5">1/32</option>
+          </select>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="speed tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="speed tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="speed"></label>
+        <div class="input-unit-container">
+          <input type="text" name="yspeed-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="time tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="time tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="time"></label>
+        <div class="input-unit-container">
+          <input type="text" name="ytime-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="max step tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="max step tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="max step"></label>
+        <div class="input-unit-container">
+          <input type="text" name="ystep-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="coordinate tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="coordinate tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="coordinate"></label>
+        <div class="input-unit-container">
+          <input type="text" name="ycoordinate-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="run tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="run tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="run"></label>
+        <div class="input-unit-container">
+          <input type="text" name="yrun-read" disabled>
+        </div>
+      </div>
+    </div>
+    <div class="container-motor">
+      <div id="motor-z" class="three-img"></div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="delay tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="delay tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="delay"></label>
+        <div class="input-unit-container">
+          <input type="text" name="zdelay-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="μstep tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="μstep tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="μstep"></label>
+        <div class="input-unit-container">
+          <select name="zacc-read">
+            <option value="0">FULL</option>
+            <option value="1">1/2</option>
+            <option value="2">1/4</option>
+            <option value="3">1/8</option>
+            <option value="4">1/16</option>
+            <option value="5">1/32</option>
+          </select>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="speed tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="speed tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="speed"></label>
+        <div class="input-unit-container">
+          <input type="text" name="zspeed-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="time tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="time tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="time"></label>
+        <div class="input-unit-container">
+          <input type="text" name="ztime-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="max step tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="max step tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="max step"></label>
+        <div class="input-unit-container">
+          <input type="text" name="zstep-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="coordinate tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="coordinate tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="coordinate"></label>
+        <div class="input-unit-container">
+          <input type="text" name="zcoordinate-read" disabled>
+        </div>
+      </div>
+      <div class="row-motor">
+        <div class="data-tooltip-container m-r-5" data-tooltip="run tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="run tooltip" style="display: none;"></span>
+        </div>
+        <label eo-translator="run"></label>
+        <div class="input-unit-container">
+          <input type="text" name="zrun-read" disabled>
+        </div>
+      </div>
+    </div>
+  </main>
+  <main class="control-main" id="main-1">
+    <div class="arduino-control-title" eo-translator="motor control"></div>
+    <div class="arduino-control-container">
+      <div class="arduino-control-row">
+        <div class="title-arduino-control"></div>
+        <div class="title-arduino-control" eo-translator="engines x"></div>
+        <div class="title-arduino-control" eo-translator="engines y"></div>
+        <div class="title-arduino-control" eo-translator="engines z"></div>
+      </div>
+      <div class="arduino-control-row">
+        <div class="title-arduino-control">
+          <p eo-translator="engines μstep"></p>
+          <div class="data-tooltip-container m-l-5" data-tooltip="μstep tooltip">
+            <img src="resources/img/info.svg">
+            <span eo-translator="μstep tooltip" style="display: none;"></span>
+          </div>
+        </div>
+        <div class="input-arduino-control">
+          <select name="xacc-write">
+            <option value="0" eo-translator="full"></option>
+            <option value="1">1/2</option>
+            <option value="2">1/4</option>
+            <option value="3">1/8</option>
+            <option value="4">1/16</option>
+            <option value="5">1/32</option>
+          </select>
+        </div>
+        <div class="input-arduino-control">
+          <select name="yacc-write">
+            <option value="0" eo-translator="full"></option>
+            <option value="1">1/2</option>
+            <option value="2">1/4</option>
+            <option value="3">1/8</option>
+            <option value="4">1/16</option>
+            <option value="5">1/32</option>
+          </select>
+        </div>
+        <div class="input-arduino-control">
+          <select name="zacc-write">
+            <option value="0" eo-translator="full"></option>
+            <option value="1">1/2</option>
+            <option value="2">1/4</option>
+            <option value="3">1/8</option>
+            <option value="4">1/16</option>
+            <option value="5">1/32</option>
+          </select>
+        </div>
+      </div>
+      <div class="arduino-control-row">
+        <div class="title-arduino-control">
+          <p eo-translator="engines delay"></p>
+          <div class="data-tooltip-container m-l-5" data-tooltip="delay tooltip">
+            <img src="resources/img/info.svg">
+            <span eo-translator="delay tooltip" style="display: none;"></span>
+          </div>
+        </div>
+        <div class="input-arduino-control">
+          <input type="text" class="input-arduino" name="xdelay-write" placeholder="0.15 - 18.75" />
+        </div>
+        <div class="input-arduino-control">
+          <input type="text" class="input-arduino" name="ydelay-write" placeholder="0.15 - 18.75" />
+        </div>
+        <div class="input-arduino-control">
+          <input type="text" class="input-arduino" name="zdelay-write" placeholder="0.15 - 18.75" />
+        </div>
+      </div>
+      <div class="button-arduino-container">
+        <button id="op_w2">
+          <img src="resources/img/upload.svg" alt="upload.svg">
+          <p eo-translator="submit"></p>
+        </button>
+      </div>
+    </div>
+    <div class="arduino-control-title" eo-translator="wifi"></div>
+    <div class="count-wifi">
+      <span class="count-tooltip">
+        <div class="data-tooltip-container m-r-5" data-tooltip="wifi tooltip">
+          <img src="resources/img/info.svg">
+          <span eo-translator="wifi tooltip" style="display: none;"></span>
+        </div>
+        <p><span id="count-wifi"></span>-99</p>
+      </span>
+      <div id="add-wifi">
+        <p eo-translator="add"></p>
+        <img src="resources/img/plus.svg" alt="plus.svg">
+      </div>
+    </div>
+    <div class="arduino-control-container">
+      <div id="wifi-list">
+      </div>
+    </div>
+    <div class="arduino-control-container">
+      <div class="button-arduino-container">
+        <button id="op_wifi">
+          <img src="resources/img/save.svg" alt="save.svg">
+          <p eo-translator="save"></p>
+        </button>
+      </div>
+    </div>
+    <div class="arduino-control-title" eo-translator="restart"></div>
+    <div class="banner-reset">
+      <div class="banner-title" eo-translator="are you sure"></div>
+      <div class="button-arduino-reset">
+        <button id="close" eo-translator="close"></button>
+        <button id="restart" eo-translator="continue"></button>
+      </div>
+    </div>
+    <div class="arduino-control-container">
+      <div class="button-arduino-container" style="padding-top: 0;">
+        <button id="open-banner">
+          <img src="resources/img/restart.svg" alt="restart.svg">
+          <p eo-translator="restart"></p>
+        </button>
+      </div>
+    </div>
+  </main>
+  <main class="warehouse-main slide" id="main-2">
+    <nav id="warehouse-1">
+      <div class="container rotate-1" id="rotate-1">
+        <div class="cube x-1 y-1 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-2 y-1 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-3 y-1 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-4 y-1 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-5 y-1 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-6 y-1 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-7 y-1 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-8 y-1 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-1 y-2 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-2 y-2 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-3 y-2 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-4 y-2 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-5 y-2 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-6 y-2 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-7 y-2 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-8 y-2 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-1 y-3 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-2 y-3 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-3 y-3 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-4 y-3 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-5 y-3 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-6 y-3 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-7 y-3 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-8 y-3 z-1">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+      </div>
+    </nav>
+    <nav id="warehouse-2">
+      <div class="container rotate-2" id="rotate-2">
+        <div class="cube x-8 y-1 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-7 y-1 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-6 y-1 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-5 y-1 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-4 y-1 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-3 y-1 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-2 y-1 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-1 y-1 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-8 y-2 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-7 y-2 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-6 y-2 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-5 y-2 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-4 y-2 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-3 y-2 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-2 y-2 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-1 y-2 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-8 y-3 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-7 y-3 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-6 y-3 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-5 y-3 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-4 y-3 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-3 y-3 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-2 y-3 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+        <div class="cube x-1 y-3 z-2">
+          <div class="face top"></div>
+          <div class="face bottom"></div>
+          <div class="face left"></div>
+          <div class="face right"></div>
+          <div class="face front"></div>
+          <div class="face back"></div>
+        </div>
+      </div>
+    </nav>
+    <nav id="spec-container">
+      <div class="search-spec">
+        <p eo-translator="name or code"></p>
+        <input type="text" name="name-search" />
+        <button id="search" eo-translator="search"></button>
+        <img src="resources/img/trash.svg" alt="trash.svg" id="reset-search" class="no-reset">
+      </div>
+      <div class="element-found" id="found">
+      </div>
+      <div id="not-found" eo-translator="not found"></div>
+    </nav>
+  </main>
+  <main class="qr" id="main-3">
+    <aside id="aside-left">
+      <div class="container-el-qr">
+        <label eo-translator="insert name"></label>
+        <input type="text" id="name" name="name" />
+      </div>
+      <div class="container-el-qr">
+        <label eo-translator="insert code"></label>
+        <input type="text" id="code" name="code" />
+      </div>
+      <div class="container-el-qr">
+        <label eo-translator="insert stock count"></label>
+        <input type="text" id="count" name="count" />
+      </div>
+      <div class="container-button-qr">
+        <button id="generate-qr" style="display: none;">
+          <img src="resources/img/qrcode.svg" alt="resources/img/qrcode.svg">
+          <p eo-translator="generate qr code"></p>
+        </button>
+        <button id="generate-qr-none" class="no-click-qr">
+          <img src="resources/img/qrcode.svg" alt="resources/img/qrcode.svg">
+          <p eo-translator="generate qr code"></p>
+        </button>
+      </div>
+    </aside>
+    <aside id="aside-right">
+      <div>
+        <div id="qr-code"></div>
+      </div>
+      <div class="p-t-20">
+        <button id="download-qr" style="display: none;">
+          <img src="resources/img/download-white.svg" alt="download-white.svg">
+          <p eo-translator="download qr code"></p>
+        </button>
+        <button id="download-qr-none" class="no-click-qr">
+          <img src="resources/img/download-white.svg" alt="download-white.svg">
+          <p eo-translator="download qr code"></p>
+        </button>
+      </div>
+    </aside>
+  </main>
+  <main class="log" id="main-4">
+    <div class="log-container">
+      <div class="container-svg">
+        <img src="resources/img/download.svg" alt="download.svg" id="download">
+        <button eo-translator="download log" id="log-down"></button>
+        <button eo-translator="download error" id="error-down"></button>
+        <img src="resources/img/trash.svg" alt="trash.svg" id="trash">
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+  </main>
+  <div class="chat-container" id="chat-container">
+    <div id="responseArea">
+      <div class="container-baloon request">
+        <div class="request-ai">
+          Questo è un balloon con la coda in basso a destra.
+        </div>
+      </div>
+      <div class="container-baloon response">
+        <div class="response-ai loading-dots">
+        </div>
+      </div>
+    </div>
+    <div id="inputForm">
+      <textarea id="userInput"></textarea>
+      <div class="button-container-ai">
+        <button id="send-message" type="button">
+          <img src="resources/img/send.svg" alt="send.svg">
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="layover"></div>
+  <div id="animation-loading"></div>
+  <div id="animation-state"></div>
+  <div id="text-lottie"></div>
+  <footer>
+    <div class="svg-arduino-view svg" id="item-0">
+      <img src="resources/img/view.svg" alt="view.svg">
+      <p eo-translator="arduino view"></p>
+    </div>
+    <div class="svg-arduino-control svg" id="item-1">
+      <img src="resources/img/settings.svg" alt="settings.svg">
+      <p eo-translator="arduino control"></p>
+    </div>
+    <div class="svg-warehouse svg active-hover" id="item-2">
+      <img src="resources/img/warehouse.svg" alt="warehouse.svg">
+      <p eo-translator="warehouse"></p>
+    </div>
+    <div class="svg-log svg" id="item-3">
+      <img src="resources/img/qrcode.svg" alt="qrcode.svg">
+      <p eo-translator="qr code"></p>
+    </div>
+    <div class="svg-log svg" id="item-4">
+      <img src="resources/img/log.svg" alt="log.svg">
+      <p eo-translator="log"></p>
+    </div>
+  </footer>
+</body>
+
+</html>

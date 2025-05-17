@@ -1,0 +1,115 @@
+#main-4 {
+  width: 100%;
+  padding: 0 10%;
+
+  .log-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    position: relative;
+
+    .container-svg {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+
+      img {
+        width: 20px;
+        margin-right: 5px;
+      }
+
+      #trash {
+        width: 20px;
+
+        &:hover {
+          cursor: pointer;
+
+          path {
+            fill: #076bd5;
+          }
+        }
+      }
+
+      #trash.no-hover {
+        &:hover {
+          cursor: default;
+
+          path {
+            fill: #ec7900;
+          }
+        }
+      }
+
+      #trash {
+        margin-left: 15px;
+      }
+
+      button {
+        border: none;
+        outline: none;
+        padding: 2px 15px;
+        background-color: transparent;
+        border: 2px solid #ec7900;
+        color: #ffffff;
+        border-radius: 3px;
+        transition: border 0.2s, color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: nowrap;
+        margin: 0 5px;
+
+        &:hover {
+          border: 2px solid #076bd5;
+          color: #076bd5;
+        }
+      }
+    }
+
+    .no-hover {
+      opacity: 0.2;
+      pointer-events: none;
+
+      &:hover {
+        svg {
+          fill: #ec7900 !important;
+          stroke: #ec7900 !important;
+          cursor: default !important;
+        }
+      }
+    }
+
+    .log {
+      background-color: transparent;
+      color: #ffffff;
+      font-weight: 400;
+      overflow-y: auto;
+      max-height: 400px;
+      height: 400px;
+      width: 100%;
+      border: 2px solid #ec7900;
+      border-radius: 3px;
+      margin-bottom: 20px;
+      text-align: left;
+      padding: 10px;
+      font-size: 12px;
+      overflow-wrap: break-word;
+    }
+
+    .empty {
+      color: rgba($color: #ffffff, $alpha: 0.2);
+      width: 100%;
+      font-size: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
