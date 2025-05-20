@@ -21,6 +21,13 @@ MDNS mdns(udp);
 WiFiServer server(80);
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+bool FLAG_START_X = false;
+bool FLAG_START_Y = false;
+
+int x = 0;
+int y = 0;
+int z = 0;
+
 int DEFAULT_ACCELERATION_X = 0;
 int DEFAULT_ACCELERATION_Y = 0;
 int DEFAULT_ACCELERATION_Z = 0;
@@ -449,23 +456,27 @@ void restart() {
   NVIC_SystemReset();
 }
 
-void sendResponse(WiFiClient client, int statusCode, String contentType, String message) {
-  client.println("HTTP/1.1 " + String(statusCode) + " OK");
-  client.println("Content-Type: " + contentType);
-  client.println("Access-Control-Allow-Origin: *");
-  client.println("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-  client.println("Access-Control-Allow-Headers: Content-Type");
-  client.println();
-  client.println(message);
+// firma corretta con riferimento
+void sendResponse(WiFiClient& client, int statusCode, const char* contentType, const String& message) {
+  client.print("HTTP/1.1 " + String(statusCode) + " OK\r\n");
+  client.print("Content-Type: " + String(contentType) + "\r\n");
+  client.print("Content-Length: " + String(message.length()) + "\r\n");
+  // CORS
+  client.print("Access-Control-Allow-Origin: *\r\n");
+  client.print("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n");
+  client.print("Access-Control-Allow-Headers: Content-Type\r\n");
+  client.print("Connection: close\r\n\r\n");
+  client.print(message);
+  client.stop();
 }
 
-void handleOptionsRequest(WiFiClient client) {
-  client.println("HTTP/1.1 200 OK");
-  client.println("Access-Control-Allow-Origin: *");
-  client.println("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-  client.println("Access-Control-Allow-Headers: Content-Type");
-  client.println("Connection: close");
-  client.println();
+void handleOptionsRequest(WiFiClient& client) {
+  client.print("HTTP/1.1 200 OK\r\n");
+  client.print("Access-Control-Allow-Origin: *\r\n");
+  client.print("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n");
+  client.print("Access-Control-Allow-Headers: Content-Type\r\n");
+  client.print("Connection: close\r\n\r\n");
+  client.stop();
 }
 
 String headRequest(int contentLength) {
@@ -483,7 +494,7 @@ String headRequest(int contentLength) {
   return headString;
 }
 
-void status(WiFiClient client) {
+void status(WiFiClient& client) {
   StaticJsonDocument<4096> doc;
   doc["status"] = (WiFi.status() == WL_CONNECTED) ? "true" : "false";
   doc["rssi"] = WiFi.RSSI();
@@ -494,7 +505,7 @@ void status(WiFiClient client) {
   doc.clear();
 }
 
-void getOp1(WiFiClient client) {
+void getOp1(WiFiClient& client) {
   String response = "{";
   response += "\"xacc-read\":" + String(DEFAULT_ACCELERATION_X) + ",";
   response += "\"yacc-read\":" + String(DEFAULT_ACCELERATION_Y) + ",";
@@ -531,7 +542,7 @@ void getOp1(WiFiClient client) {
   client.flush();
 }
 
-void getOp2(WiFiClient client) {
+void getOp2(WiFiClient& client) {
   String response = "{";
   response += "\"xacc-write\":" + String(DEFAULT_ACCELERATION_X) + ",";
   response += "\"yacc-write\":" + String(DEFAULT_ACCELERATION_Y) + ",";
@@ -563,7 +574,7 @@ void getOp2(WiFiClient client) {
   client.flush();
 }
 
-void getOp3wh1(WiFiClient client) {
+void getOp3wh1(WiFiClient& client) {
   String response = "{";
 
   response += "\"wh1\":[";
@@ -586,11 +597,11 @@ void getOp3wh1(WiFiClient client) {
   client.flush();
 }
 
-void getOp3wh2(WiFiClient client) {
+void getOp3wh2(WiFiClient& client) {
   String response = "{";
 
   response += "\"wh2\":[";
-  for (int i = 0; i < sizewh1; i++) {
+  for (int i = 0; i < sizewh2; i++) {
     response += "{\"x\":" + String(wh2[i][0]) + ",\"y\":" + String(wh2[i][1]) + ",\"z\":2,\"full\":" + String(wh2[i][2]);
     if (wh2[i][2] == 1) {
       response += ",\"name\":\"" + wh2_strings[i][0] + "\"";
@@ -609,7 +620,7 @@ void getOp3wh2(WiFiClient client) {
   client.flush();
 }
 
-void postOp2(WiFiClient client) {
+void postOp2(WiFiClient& client) {
   String request = "";
   while (client.connected() && client.available()) {
     char c = client.read();
@@ -679,7 +690,7 @@ void recreateFileWifi(const char* filename, const JsonDocument& doc, int count) 
   printMessage("OPERATION", "file saved: WIFI.CSV", true, false);
 }
 
-void postWifi(WiFiClient client) {
+void postWifi(WiFiClient& client) {
   String request = "";
   while (client.connected() && client.available()) {
     char c = client.read();
@@ -755,7 +766,7 @@ void postWifi(WiFiClient client) {
                "{\"status\": \"success\", \"message\": \"Tutti i dati sono stati ricevuti e salvati\"}");
 }
 
-void postRestart(WiFiClient client) {
+void postRestart(WiFiClient& client) {
   String request = "";
   while (client.connected() && client.available()) {
     char c = client.read();
@@ -814,7 +825,7 @@ void writeFiles(const char* file1, const char* file2, int wh1[24][3], String wh1
   }
 }
 
-void postOp3(WiFiClient client) {
+void postOp3(WiFiClient& client) {
   String request = "";
   while (client.connected() && client.available()) {
     char c = client.read();
@@ -847,27 +858,50 @@ void postOp3(WiFiClient client) {
     }
   }
 
+
+
+
+  int box = doc["box"].as<int>();
+  if (box < 0 || box >= 24) {
+    sendResponse(client, 400, "application/json", "{\"status\":\"error\",\"message\":\"Indice box fuori range\"}");
+    return;
+  }
+
+  // 2) Prendi il valore x
+  if (doc["z"].as<int>() == 1) {
+    x = wh1[box][0];
+  } else if (doc["z"].as<int>() == 2) {
+    x = wh2[box][0];
+  }
+
   if (allKeysPresent) {
+    sendPostRequest("m5stack-0-0-0-0.local", "/op=withdrawx", String(x));
+    //sendPostRequest("m5stack-0-0-0-1.local", "/op=withdrawy", "start");
+
+    /* if (FLAG_START_X == true && FLAG_START_Y == true) {
+      sendPostRequest("m5stack-0-0-0-1.local", "/op=withdrawz", "start");
+    } */
+
     sendResponse(client, 200, "application/json", "{\"status\": \"success\", \"message\": \"Tutti i dati sono stati ricevuti\"}");
     if (doc["z"].as<int>() == 1) {
       wh1[doc["box"].as<int>()][2] = 0;
       wh1_strings[doc["box"].as<int>()][0] = "";
       wh1_strings[doc["box"].as<int>()][1] = "";
       wh1_strings[doc["box"].as<int>()][2] = "";
-      writeFiles("/WH1_INT.CSV", "/WH1_STR.CSV", wh1, wh1_strings);
+      writeFiles("WH1_INT.CSV", "WH1_STR.CSV", wh1, wh1_strings);
     } else if (doc["z"].as<int>() == 2) {
       wh2[doc["box"].as<int>()][2] = 0;
       wh2_strings[doc["box"].as<int>()][0] = "";
       wh2_strings[doc["box"].as<int>()][1] = "";
       wh2_strings[doc["box"].as<int>()][2] = "";
-      writeFiles("/WH2_INT.CSV", "/WH2_STR.CSV", wh2, wh2_strings);
+      writeFiles("WH2_INT.CSV", "WH2_STR.CSV", wh2, wh2_strings);
     }
   } else {
     sendResponse(client, 400, "application/json", "{\"status\": \"error\", \"message\": \"Alcuni parametri sono mancanti\"}");
   }
 }
 
-void startMotor(WiFiClient client, String type) {
+void startMotor(WiFiClient& client, String type) {
   String jsonResponse;
   StaticJsonDocument<200> doc;
   doc["status"] = "1";
@@ -952,12 +986,7 @@ void sendPostRequest(const char* host, const char* path, const String& message) 
     }
 
     // Costruisce la richiesta POST con il path specificato
-    String request = String("POST ") + path + " HTTP/1.1\r\n" +
-                     "Host: " + host + "\r\n" +
-                     "Content-Type: application/json\r\n" +
-                     "Content-Length: " + message.length() + "\r\n" +
-                     "Connection: close\r\n\r\n" +
-                     message;
+    String request = String("POST ") + path + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Content-Type: application/json\r\n" + "Content-Length: " + message.length() + "\r\n" + "Connection: close\r\n\r\n" + message;
 
     client.print(request);
     Serial.println("Richiesta inviata. Attendo risposta...");
@@ -978,6 +1007,16 @@ void sendPostRequest(const char* host, const char* path, const String& message) 
 
     if (response.indexOf("received") != -1) {
       Serial.println("Conferma 'received' trovata. Fine.");
+
+      if (path == "/op=startx") {
+        FLAG_START_X = true;
+      } else if (path == "/op=starty") {
+        FLAG_START_Y = true;
+      } else if (path == "/op=startz") {
+        FLAG_START_X = false;
+        FLAG_START_Y = false;
+      }
+
       break;
     } else {
       Serial.println("Risposta non valida. Riprovo...");
@@ -990,21 +1029,22 @@ void handleClient(WiFiClient client) {
   String requestLine = client.readStringUntil('\r');
   client.readStringUntil('\n');
 
-  while (client.available()) {
-    String headerLine = client.readStringUntil('\n');
-    if (headerLine == "\r" || headerLine == "\n") {
-      break;
-    }
+  // salto tutti gli header
+  while (client.available() && client.read() != '\n')
+    ;
+
+  // PRE-FLIGHT CORS
+  if (requestLine.startsWith("OPTIONS ")) {
+    handleOptionsRequest(client);
+    return;
   }
 
   if (requestLine.indexOf("POST /op=qr1") != -1) {
     receiveQr(client, 1);
     printMessage("OPERATION", "POST /op=qr1", true, false);
-    return;
   } else if (requestLine.indexOf("POST /op=qr2") != -1) {
     receiveQr(client, 2);
     printMessage("OPERATION", "POST /op=qr2", true, false);
-    return;
   } else if (requestLine.indexOf("POST /op=w_2") != -1) {
     printMessage("OPERATION", "POST /op=w_2", true, false);
     postOp2(client);
@@ -1031,12 +1071,6 @@ void handleClient(WiFiClient client) {
   } else if (requestLine.indexOf("GET /op=r_3_2") != -1) {
     printMessage("OPERATION", "GET /op=r_3_2", true, false);
     getOp3wh2(client);
-  } else if (requestLine.startsWith("GET /op=qr1")) {
-    Serial.print("QR received");
-    client.print("tutto rucevuto!!!");
-    /* printMessage("OPERATION", "POST /op=qr1", true, false); */
-  } else if (requestLine.startsWith("POST /op=qr2")) {
-    printMessage("OPERATION", "POST /op=qr2", true, false);
   } else {
     sendResponse(client, 404, "application/json", "{\"status\": \"error\", \"message\": \"Risorsa non trovata\"}");
   }
@@ -1063,15 +1097,17 @@ void setup() {
   wifiConfig();
 
   /**richieste a m5stack**/
-  //sendPostRequest("m5stack-0-0-0-1.local", "/op=startz", "start");
   sendPostRequest("m5stack-0-0-0-0.local", "/op=startx", "start");
   //sendPostRequest("m5stack-0-0-0-1.local", "/op=starty", "start");
+
+  if (FLAG_START_X == true && FLAG_START_Y == true) {
+    sendPostRequest("m5stack-0-0-0-1.local", "/op=startz", "start");
+  }
 }
 
 void loop() {
   mdns.run();
-
-  WiFiClient client = server.available();
+  WiFiClient client = server.available();  // by-value
   if (client) {
     handleClient(client);
   }

@@ -29,8 +29,13 @@ const int STEP_PIN = 5;
 const int ENA_PIN = 17;
 
 
+
 int COUNTER = 0;
 int FINAL_COUNTER = 0;
+
+int THIS_ZONE = 0;
+
+int x = 0;
 
 void forwardMotor(int steps, int stepDelay) {
   digitalWrite(ENA_PIN, LOW);
@@ -66,10 +71,8 @@ void backMotor(int steps, int stepDelay) {
       stopMotor();
       return;
     }
-    if (COUNTER > 0) {
-      COUNTER--;
-      Serial.println(COUNTER);
-    }
+    COUNTER--;
+    Serial.println(COUNTER);
     digitalWrite(STEP_PIN, HIGH);
     delay(stepDelay);
     digitalWrite(STEP_PIN, LOW);
@@ -86,13 +89,58 @@ void stopMotor() {
 }
 
 void configStart() {
-  backMotor(2000, 1);
-  delay(2000);
-  forwardMotor(2000, 1);
+  bool CYCLE = true;
+  digitalWrite(ENA_PIN, LOW);  /* accende driver */
+  digitalWrite(DIR_PIN, HIGH); /* gira all'indietro */
+  delay(20);
+
+  while (CYCLE) {
+    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+      stopMotor();
+      CYCLE = false;
+    }
+    digitalWrite(STEP_PIN, HIGH);
+    delay(10);
+    digitalWrite(STEP_PIN, LOW);
+    delay(10);
+  }
+
+  delay(1000);
+
+  CYCLE = true;
+  digitalWrite(ENA_PIN, LOW); /* accende driver */
+  digitalWrite(DIR_PIN, LOW); /* gira in avanti */
+  delay(20);
+
+  while (CYCLE) {
+    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+      stopMotor();
+      CYCLE = false;
+    }
+    COUNTER++;
+    digitalWrite(STEP_PIN, HIGH);
+    delay(10);
+    digitalWrite(STEP_PIN, LOW);
+    delay(10);
+  }
+
   FINAL_COUNTER = COUNTER;
-  delay(2000);
-  backMotor(COUNTER, 1);
+  Serial.print("lunghezza totale: ");
   Serial.println(FINAL_COUNTER);
+  delay(1000);
+
+  THIS_ZONE = calcolateDistance(0);
+
+  backMotor(FINAL_COUNTER - THIS_ZONE, 10);
+}
+
+int calcolateDistance(int POSITION) {
+  int PARTIAL_DISTANCE = FINAL_COUNTER / 9;
+  int CENTER_DISTANCE = PARTIAL_DISTANCE / 2;
+  int DISTANCE = (PARTIAL_DISTANCE * POSITION) + CENTER_DISTANCE;
+  Serial.print("calcolate distance: ");
+  Serial.println(DISTANCE);
+  return DISTANCE;
 }
 
 void configPin() {
@@ -652,15 +700,29 @@ void handleClient(WiFiClient client) {
   }
 
   if (requestLine.indexOf("POST /op=startx") != -1) {
-    Serial.println("received");
+    Serial.println("configStart");
     configStart();
     client.print("received");
-    return;
+  } else if (requestLine.indexOf("POST /op=withdrawx") != -1) {
+    Serial.println("withdraw");
+    x = extract(body);
+    calcolateDistance(0)
+    forwardMotor();
+    client.print("received");
+  } else if (requestLine.indexOf("POST /op=returnx") != -1) {
+    Serial.println("return");
+    client.print("received");
   } else {
     sendResponse(client, 404, "application/json", "{\"status\": \"error\", \"message\": \"Risorsa non trovata\"}");
   }
 
   client.stop();
+}
+
+int extract(const String& body) {
+  String s = body;
+  s.trim();            // rimuove spazi e \r\n
+  return s.toInt();    // converte la stringa in intero
 }
 
 /*******************************/
