@@ -6,6 +6,7 @@
 /********************************************************************************/
 /********************************************************************************/
 import lottie from 'lottie-web';
+import { v4 as uuidv4 } from 'uuid';
 
 /********************************************************************************/
 /********************************************************************************/
@@ -1700,6 +1701,14 @@ document.addEventListener("DOMContentLoaded", () => {
   /********************************************************************************/
   /********************************************************************************/
   /********************************************************************************/
+  const buttonGenerate = document.querySelector("#generate-id");
+  const input = document.querySelector("#code");
+
+  buttonGenerate.addEventListener("click", () => {
+    const raw = uuidv4().replace(/-/g, '').slice(0, 9);
+    const id = `${raw.slice(0, 3)}-${raw.slice(3, 6)}-${raw.slice(6, 9)}`;
+    input.value = id;
+  });
 
   function checkInputs() {
     const nameQr = document.querySelector("#name").value.trim();

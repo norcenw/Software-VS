@@ -20,6 +20,7 @@
     "fs": "^0.0.1-security",
     "lottie-web": "^5.12.2",
     "path-browserify": "^1.0.1",
-    "three": "^0.171.0"
+    "three": "^0.171.0",
+    "uuid": "^11.1.0"
   }
 }

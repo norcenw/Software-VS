@@ -56,7 +56,7 @@
     </div>
   </header>
   <div class="bottom-header">
-    <div id="toggle-container">
+    <div id="toggle-container" class="d-none">
       <p eo-translator="toggle real time"></p>
       <label class="toggle-switch">
         <input type="checkbox" id="real-time">
@@ -66,14 +66,14 @@
     <div></div>
     <button id="ai-toggle" eo-translator="ai help" style="display: none;"></button>
     <select id="languageSwitcher">
-      <option value="en" selected>English</option>
-      <option value="it">Italiano</option>
-      <option value="ru">Русский</option>
-      <option value="fr">Français</option>
-      <option value="cn">中文普通话</option>
-      <option value="es">Español</option>
-      <option value="pt">Português</option>
-      <option value="de">Deutsch</option>
+      <option value="en" selected>🇬🇧 English</option>
+      <option value="it">🇮🇹 Italiano</option>
+      <option value="ru">🇷🇺 Русский</option>
+      <option value="fr">🇫🇷 Français</option>
+      <option value="cn">🇨🇳 中文普通话</option>
+      <option value="es">🇪🇸 Español</option>
+      <option value="pt">🇵🇹 Português</option>
+      <option value="de">🇩🇪 Deutsch</option>
     </select>
   </div>
   <main class="view-main" id="main-0">
@@ -136,26 +136,6 @@
           <input type="text" name="xstep-read" disabled>
         </div>
       </div>
-      <div class="row-motor">
-        <div class="data-tooltip-container m-r-5" data-tooltip="coordinate tooltip">
-          <img src="resources/img/info.svg">
-          <span eo-translator="coordinate tooltip" style="display: none;"></span>
-        </div>
-        <label eo-translator="coordinate"></label>
-        <div class="input-unit-container">
-          <input type="text" name="xcoordinate-read" disabled>
-        </div>
-      </div>
-      <div class="row-motor">
-        <div class="data-tooltip-container m-r-5" data-tooltip="run tooltip">
-          <img src="resources/img/info.svg">
-          <span eo-translator="run tooltip" style="display: none;"></span>
-        </div>
-        <label eo-translator="run"></label>
-        <div class="input-unit-container">
-          <input type="text" name="xrun-read" disabled>
-        </div>
-      </div>
     </div>
     <div class="container-motor m-l-50 m-r-50">
       <div id="motor-y" class="three-img"></div>
@@ -214,26 +194,6 @@
         <label eo-translator="max step"></label>
         <div class="input-unit-container">
           <input type="text" name="ystep-read" disabled>
-        </div>
-      </div>
-      <div class="row-motor">
-        <div class="data-tooltip-container m-r-5" data-tooltip="coordinate tooltip">
-          <img src="resources/img/info.svg">
-          <span eo-translator="coordinate tooltip" style="display: none;"></span>
-        </div>
-        <label eo-translator="coordinate"></label>
-        <div class="input-unit-container">
-          <input type="text" name="ycoordinate-read" disabled>
-        </div>
-      </div>
-      <div class="row-motor">
-        <div class="data-tooltip-container m-r-5" data-tooltip="run tooltip">
-          <img src="resources/img/info.svg">
-          <span eo-translator="run tooltip" style="display: none;"></span>
-        </div>
-        <label eo-translator="run"></label>
-        <div class="input-unit-container">
-          <input type="text" name="yrun-read" disabled>
         </div>
       </div>
     </div>
@@ -296,26 +256,6 @@
           <input type="text" name="zstep-read" disabled>
         </div>
       </div>
-      <div class="row-motor">
-        <div class="data-tooltip-container m-r-5" data-tooltip="coordinate tooltip">
-          <img src="resources/img/info.svg">
-          <span eo-translator="coordinate tooltip" style="display: none;"></span>
-        </div>
-        <label eo-translator="coordinate"></label>
-        <div class="input-unit-container">
-          <input type="text" name="zcoordinate-read" disabled>
-        </div>
-      </div>
-      <div class="row-motor">
-        <div class="data-tooltip-container m-r-5" data-tooltip="run tooltip">
-          <img src="resources/img/info.svg">
-          <span eo-translator="run tooltip" style="display: none;"></span>
-        </div>
-        <label eo-translator="run"></label>
-        <div class="input-unit-container">
-          <input type="text" name="zrun-read" disabled>
-        </div>
-      </div>
     </div>
   </main>
   <main class="control-main" id="main-1">
@@ -375,13 +315,13 @@
           </div>
         </div>
         <div class="input-arduino-control">
-          <input type="text" class="input-arduino" name="xdelay-write" placeholder="0.15 - 18.75" />
+          <input type="text" class="input-arduino" name="xdelay-write" placeholder="1 - 100" />
         </div>
         <div class="input-arduino-control">
-          <input type="text" class="input-arduino" name="ydelay-write" placeholder="0.15 - 18.75" />
+          <input type="text" class="input-arduino" name="ydelay-write" placeholder="1 - 100" />
         </div>
         <div class="input-arduino-control">
-          <input type="text" class="input-arduino" name="zdelay-write" placeholder="0.15 - 18.75" />
+          <input type="text" class="input-arduino" name="zdelay-write" placeholder="1 - 100" />
         </div>
       </div>
       <div class="button-arduino-container">
@@ -847,7 +787,10 @@
       </div>
       <div class="container-el-qr">
         <label eo-translator="insert code"></label>
-        <input type="text" id="code" name="code" />
+        <input type="text" id="code" name="code" disabled/>
+        <button id="generate-id">
+          <img src="../dist/resources/img/plus.svg" alt="generate-id">
+        </button>
       </div>
       <div class="container-el-qr">
         <label eo-translator="insert stock count"></label>
