@@ -1577,8 +1577,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (
       !regex.test(boxInput.value) ||
-      valueInput < 0.15 ||
-      valueInput > 18.75
+      valueInput < 1 ||
+      valueInput > 100
     ) {
       boxInput.style.borderColor = "crimson";
       boxInput.style.backgroundColor = "crimson";

@@ -21,13 +21,6 @@ MDNS mdns(udp);
 WiFiServer server(80);
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-bool FLAG_START_X = false;
-bool FLAG_START_Y = false;
-
-int x = 0;
-int y = 0;
-int z = 0;
-
 int DEFAULT_ACCELERATION_X = 0;
 int DEFAULT_ACCELERATION_Y = 0;
 int DEFAULT_ACCELERATION_Z = 0;
@@ -52,12 +45,6 @@ int ztime = 0;
 int xstep = 0;
 int ystep = 0;
 int zstep = 0;
-int xcoordinate = 0;
-int ycoordinate = 0;
-int zcoordinate = 0;
-int xrun = 0;
-int yrun = 0;
-int zrun = 0;
 
 float calcSpeed(float step_delay_ms, int microStep) {
   const int steps_per_revolution = 200;
@@ -239,15 +226,31 @@ bool initDefault(const char* filename) {
 
     if (index == 0) {
       DEFAULT_ACCELERATION_X = value.toInt();
+      Serial.println("DEFAULT_ACC_X");
+      Serial.println(DEFAULT_ACCELERATION_X);
     } else if (index == 1) {
       DEFAULT_ACCELERATION_Y = value.toInt();
+      Serial.println("DEFAULT_ACC_Y");
+      Serial.println(DEFAULT_ACCELERATION_Y);
     } else if (index == 2) {
       DEFAULT_ACCELERATION_Z = value.toInt();
+      Serial.println("DEFAULT_ACC_Z");
+      Serial.println(DEFAULT_ACCELERATION_Z);
     } else if (index >= 3 && index <= 5) {
-      float floatValue = value.toFloat();
-      if (index == 3) DEFAULT_DELAY_X = floatValue;
-      else if (index == 4) DEFAULT_DELAY_Y = floatValue;
-      else if (index == 5) DEFAULT_DELAY_Z = floatValue;
+      float floatValue = value.toInt();
+      if (index == 3) {
+        DEFAULT_DELAY_X = floatValue;
+        Serial.println("DEFAULT_DELAY_X");
+        Serial.println(DEFAULT_DELAY_X);
+      } else if (index == 4) {
+        DEFAULT_DELAY_Y = floatValue;
+        Serial.println("DEFAULT_DELAY_Y");
+        Serial.println(DEFAULT_DELAY_Y);
+      } else if (index == 5) {
+        DEFAULT_DELAY_Z = floatValue;
+        Serial.println("DEFAULT_DELAY_Z");
+        Serial.println(DEFAULT_DELAY_Z);
+      }
     }
 
     index++;
@@ -519,12 +522,6 @@ void getOp1(WiFiClient& client) {
   response += "\"xstep-read\":" + String(xstep) + ",";
   response += "\"ystep-read\":" + String(ystep) + ",";
   response += "\"zstep-read\":" + String(zstep) + ",";
-  response += "\"xcoordinate-read\":" + String(xcoordinate) + ",";
-  response += "\"ycoordinate-read\":" + String(ycoordinate) + ",";
-  response += "\"zcoordinate-read\":" + String(zcoordinate) + ",";
-  response += "\"xrun-read\":" + String(xrun) + ",";
-  response += "\"yrun-read\":" + String(yrun) + ",";
-  response += "\"zrun-read\":" + String(zrun) + ",";
   response += "\"xspeed-read\":" + String(calcSpeed(DEFAULT_DELAY_X, DEFAULT_ACCELERATION_X)) + ",";
   response += "\"yspeed-read\":" + String(calcSpeed(DEFAULT_DELAY_Y, DEFAULT_ACCELERATION_Y)) + ",";
   response += "\"zspeed-read\":" + String(calcSpeed(DEFAULT_DELAY_Z, DEFAULT_ACCELERATION_Z)) + ",";
@@ -825,6 +822,96 @@ void writeFiles(const char* file1, const char* file2, int wh1[24][3], String wh1
   }
 }
 
+void sendPostRequest(const char* host, const char* path, const String& message) {
+  WiFiClient client;
+
+  while (true) {
+    Serial.println("Connessione...");
+    if (!client.connect(host, 80)) {
+      Serial.println("Connessione fallita. Riprovo...");
+      delay(1000);
+      continue;
+    }
+
+    // Costruisce la richiesta POST con il path specificato
+    String request = String("POST ") + path + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Content-Type: application/json\r\n" + "Content-Length: " + message.length() + "\r\n" + "Connection: close\r\n\r\n" + message;
+
+    client.print(request);
+    Serial.println("Richiesta inviata. Attendo risposta...");
+
+    // Bloccante: legge la risposta
+    String response = "";
+    while (client.connected()) {
+      while (client.available()) {
+        char c = client.read();
+        response += c;
+      }
+    }
+
+    client.stop();
+
+    Serial.println("Risposta ricevuta:");
+    Serial.println(response);
+
+    if (response.indexOf("received") != -1) {
+      Serial.println("Conferma 'received' trovata. Fine.");
+      break;
+    } else {
+      Serial.println("Risposta non valida. Riprovo...");
+      delay(1000);
+    }
+  }
+}
+
+void sendGetRequest(const char* host, const char* path, const String& queryParams = "") {
+  WiFiClient client;
+
+  while (true) {
+    Serial.println("Connessione GET a " + String(host) + "...");
+    if (!client.connect(host, 80)) {
+      Serial.println("Connessione fallita. Riprovo in 1s...");
+      delay(1000);
+      continue;
+    }
+
+    // Costruisco il path completo con eventuali parametri
+    String fullPath = String(path);
+    if (queryParams.length() > 0) {
+      fullPath += "?" + queryParams;
+    }
+
+    // Richiesta GET (nota: non serve Content-Length né body)
+    String request = String("GET ") + fullPath + " HTTP/1.1\r\n"
+                     + "Host: " + host + "\r\n"
+                     + "Connection: close\r\n\r\n";
+
+    client.print(request);
+    Serial.println("Richiesta GET inviata. Attendo risposta...");
+
+    // Leggo la risposta
+    String response = "";
+    while (client.connected()) {
+      while (client.available()) {
+        response += char(client.read());
+      }
+    }
+    client.stop();
+
+    Serial.println("Risposta ricevuta:");
+    Serial.println(response);
+
+    if (path == "/op=maxstepx") {
+      calculateMaxStep(response, "x");
+    } else if (path == "/op=maxstepy") {
+      calculateMaxStep(response, "y");
+    } else if (path == "/op=maxstepz") {
+      calculateMaxStep(response, "z");
+    }
+
+    break;
+  }
+}
+
 void postOp3(WiFiClient& client) {
   String request = "";
   while (client.connected() && client.available()) {
@@ -858,29 +945,34 @@ void postOp3(WiFiClient& client) {
     }
   }
 
-
-
-
   int box = doc["box"].as<int>();
   if (box < 0 || box >= 24) {
     sendResponse(client, 400, "application/json", "{\"status\":\"error\",\"message\":\"Indice box fuori range\"}");
     return;
   }
 
+  String x;
+  String y;
+
   // 2) Prendi il valore x
   if (doc["z"].as<int>() == 1) {
-    x = wh1[box][0];
+    x = "{ position:" + String(wh1[box][0]) + ", delay:" + String(DEFAULT_DELAY_X) + "}";
   } else if (doc["z"].as<int>() == 2) {
-    x = wh2[box][0];
+    x = "{ position:" + String(wh2[box][0]) + ", delay:" + String(DEFAULT_DELAY_X) + "}";
+  }
+
+  if (doc["z"].as<int>() == 1) {
+    y = "{ position:" + String(wh1[box][0]) + ", ydelay:" + String(DEFAULT_DELAY_Y) + ", zdelay:" + String(DEFAULT_DELAY_Z) + "}";
+  } else if (doc["z"].as<int>() == 2) {
+    y = "{ position:" + String(wh2[box][0]) + ", ydelay:" + String(DEFAULT_DELAY_Y) + ", zdelay:" + String(DEFAULT_DELAY_Z) + "}";
   }
 
   if (allKeysPresent) {
-    sendPostRequest("m5stack-0-0-0-0.local", "/op=withdrawx", String(x));
-    //sendPostRequest("m5stack-0-0-0-1.local", "/op=withdrawy", "start");
+    sendPostRequest("m5stack-0-x.local", "/op=withdrawx", String(x));
+    //sendPostRequest("m5stack-y-z.local", "/op=withdrawyz", String(y));
 
-    /* if (FLAG_START_X == true && FLAG_START_Y == true) {
-      sendPostRequest("m5stack-0-0-0-1.local", "/op=withdrawz", "start");
-    } */
+    //sendGetRequest("m5stack-y-z.local", "/op=returnyz", "");
+    sendGetRequest("m5stack-0-x.local", "/op=returnx", "");
 
     sendResponse(client, 200, "application/json", "{\"status\": \"success\", \"message\": \"Tutti i dati sono stati ricevuti\"}");
     if (doc["z"].as<int>() == 1) {
@@ -900,6 +992,36 @@ void postOp3(WiFiClient& client) {
     sendResponse(client, 400, "application/json", "{\"status\": \"error\", \"message\": \"Alcuni parametri sono mancanti\"}");
   }
 }
+
+void calculateMaxStep(String response, String type) {
+  int receivedValue = response.toInt();
+
+  if (type == "x") {
+    xstep = receivedValue;
+  } else if (type == "y") {
+    ystep = receivedValue;
+  } else if (type == "z") {
+    zstep = receivedValue;
+  } else {
+    Serial.println("error type");
+  }
+
+  calcolateMaxTime(xstep, ystep, zstep);
+}
+
+void calcolateMaxTime(int xstep, int ystep, int zstep) {
+  if (xstep != 0) {
+    xtime = DEFAULT_DELAY_X * xstep;
+  }
+
+  if (ystep != 0) {
+    ytime = DEFAULT_DELAY_Y * ystep;
+  }
+
+  if (zstep != 0) {
+    ztime = DEFAULT_DELAY_Z * zstep;
+  }
+};
 
 void startMotor(WiFiClient& client, String type) {
   String jsonResponse;
@@ -921,6 +1043,157 @@ void startMotor(WiFiClient& client, String type) {
   client.print("Connection: close\r\n\r\n");
   client.print(jsonResponse);
   doc.clear();
+}
+
+void controlWarehouse(int whr, String name, String code, String count) {
+  int(*wh)[3];
+  String(*wh_str)[3];
+  int size;
+  String filenameInt;
+  String filenameStr;
+
+  switch (whr) {
+    case 1:
+      wh = wh1;
+      wh_str = wh1_strings;
+      size = sizewh1;
+      filenameInt = "/WH1_INT.CSV";
+      filenameStr = "/WH1_STR.CSV";
+      break;
+    case 2:
+      wh = wh2;
+      wh_str = wh2_strings;
+      size = sizewh2;
+      filenameInt = "/WH2_INT.CSV";
+      filenameStr = "/WH2_STR.CSV";
+      break;
+    default:
+      Serial.println("valore whr errato");
+      return;
+  }
+
+  for (int i = 0; i < size; i++) {
+    if (wh[i][2] == 0) {
+      wh[i][2] = 1;
+      wh_str[i][0] = name;
+      wh_str[i][1] = code;
+      wh_str[i][2] = count;
+
+      break;
+    }
+  }
+
+  Serial.println("name");
+  Serial.println(name);
+
+  Serial.println("code");
+  Serial.println(code);
+
+  Serial.println("count");
+  Serial.println(count);
+
+  if (updateWHint(filenameInt.c_str())) {
+    printMessage("SAVE", "success save: " + String(filenameInt), true, false);
+    Serial.println("success save: " + String(filenameInt));
+  } else {
+    printMessage("ERROR", "error save: " + String(filenameInt), true, false);
+    Serial.println("error save: " + String(filenameInt));
+  }
+
+  if (updateWHstr(filenameStr.c_str())) {
+    printMessage("SAVE", "success save: " + String(filenameStr), true, false);
+    Serial.println("success save: " + String(filenameStr));
+  } else {
+    printMessage("ERROR", "error save: " + String(filenameStr), true, false);
+    Serial.println("error save: " + String(filenameStr));
+  }
+}
+
+// --- Funzione di utilità per confrontare C-stringhe ---
+bool matchFilename(const char* a, const char* b) {
+  return strcmp(a, b) == 0;
+}
+
+bool updateWHint(const char* filename) {
+  int(*wh)[3] = nullptr;
+  int size = 0;
+
+  if (matchFilename(filename, "/WH1_INT.CSV")) {
+    wh = wh1;
+    size = sizewh1;
+  } else if (matchFilename(filename, "/WH2_INT.CSV")) {
+    wh = wh2;
+    size = sizewh2;
+  } else {
+    Serial.println("updateWHint: nome file non riconosciuto");
+    return false;
+  }
+
+  // Se esiste, cancellalo
+  if (SD.exists(filename)) {
+    if (!SD.remove(filename)) {
+      Serial.println("updateWHint: errore cancellazione " + String(filename));
+      return false;
+    }
+    Serial.println("updateWHint: file cancellato " + String(filename));
+  }
+
+  // Crea e scrivi
+  File newFile = SD.open(filename, FILE_WRITE);
+  if (!newFile) {
+    Serial.println("updateWHint: errore apertura " + String(filename));
+    return false;
+  }
+
+  for (int i = 0; i < size; i++) {
+    for (int j = 0; j < 3; j++) {
+      newFile.print(String(wh[i][j]));
+      newFile.print((j < 2) ? "," : "\r\n");
+    }
+  }
+  newFile.close();
+  return true;
+}
+
+bool updateWHstr(const char* filename) {
+  String(*wh_str)[3] = nullptr;
+  int size = 0;
+
+  if (matchFilename(filename, "/WH1_STR.CSV")) {
+    wh_str = wh1_strings;
+    size = sizewh1;
+  } else if (matchFilename(filename, "/WH2_STR.CSV")) {
+    wh_str = wh2_strings;
+    size = sizewh2;
+  } else {
+    Serial.println("updateWHstr: nome file non riconosciuto");
+    return false;
+  }
+
+  // Se esiste, cancellalo
+  if (SD.exists(filename)) {
+    if (!SD.remove(filename)) {
+      Serial.println("updateWHstr: errore cancellazione " + String(filename));
+      return false;
+    }
+    Serial.println("updateWHstr: file cancellato " + String(filename));
+  }
+
+  // Crea e scrivi
+  File newFile = SD.open(filename, FILE_WRITE);
+  if (!newFile) {
+    Serial.println("updateWHstr: errore apertura " + String(filename));
+    return false;
+  }
+
+  for (int i = 0; i < size; i++) {
+    for (int j = 0; j < 3; j++) {
+      newFile.print(wh_str[i][j]);
+      newFile.print((j < 2) ? "," : "\r\n");
+    }
+  }
+  newFile.close();
+  return true;
 }
 
 void receiveQr(WiFiClient& client, int whr) {
@@ -960,69 +1233,10 @@ void receiveQr(WiFiClient& client, int whr) {
     return;
   }
 
-  String name = doc["name"].as<String>();
-  String code = doc["code"].as<String>();
-  String count = doc["count"].as<String>();
-
-  Serial.println("QR Data ricevuto:");
-  Serial.println("Name: " + name);
-  Serial.println("Code: " + code);
-  Serial.println("Count: " + count);
+  controlWarehouse(whr, doc["name"].as<String>(), doc["code"].as<String>(), doc["count"].as<String>());
 
   sendResponse(client, 200, "application/json", "{\"status\":\"success\",\"message\":\"QR code ricevuto\"}");
-  printMessage("OPERATION", "POST /op=qr1", true, false);
   client.stop();
-}
-
-void sendPostRequest(const char* host, const char* path, const String& message) {
-  WiFiClient client;
-
-  while (true) {
-    Serial.println("Connessione...");
-    if (!client.connect(host, 80)) {
-      Serial.println("Connessione fallita. Riprovo...");
-      delay(1000);
-      continue;
-    }
-
-    // Costruisce la richiesta POST con il path specificato
-    String request = String("POST ") + path + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Content-Type: application/json\r\n" + "Content-Length: " + message.length() + "\r\n" + "Connection: close\r\n\r\n" + message;
-
-    client.print(request);
-    Serial.println("Richiesta inviata. Attendo risposta...");
-
-    // Bloccante: legge la risposta
-    String response = "";
-    while (client.connected()) {
-      while (client.available()) {
-        char c = client.read();
-        response += c;
-      }
-    }
-
-    client.stop();
-
-    Serial.println("Risposta ricevuta:");
-    Serial.println(response);
-
-    if (response.indexOf("received") != -1) {
-      Serial.println("Conferma 'received' trovata. Fine.");
-
-      if (path == "/op=startx") {
-        FLAG_START_X = true;
-      } else if (path == "/op=starty") {
-        FLAG_START_Y = true;
-      } else if (path == "/op=startz") {
-        FLAG_START_X = false;
-        FLAG_START_Y = false;
-      }
-
-      break;
-    } else {
-      Serial.println("Risposta non valida. Riprovo...");
-      delay(1000);
-    }
-  }
 }
 
 void handleClient(WiFiClient client) {
@@ -1040,9 +1254,11 @@ void handleClient(WiFiClient client) {
   }
 
   if (requestLine.indexOf("POST /op=qr1") != -1) {
+    Serial.println("received qr1");
     receiveQr(client, 1);
-    printMessage("OPERATION", "POST /op=qr1", true, false);
+    printMessage("OPERATION", "POST /op=qr2", true, false);
   } else if (requestLine.indexOf("POST /op=qr2") != -1) {
+    Serial.println("received qr2");
     receiveQr(client, 2);
     printMessage("OPERATION", "POST /op=qr2", true, false);
   } else if (requestLine.indexOf("POST /op=w_2") != -1) {
@@ -1097,12 +1313,12 @@ void setup() {
   wifiConfig();
 
   /**richieste a m5stack**/
-  sendPostRequest("m5stack-0-0-0-0.local", "/op=startx", "start");
-  //sendPostRequest("m5stack-0-0-0-1.local", "/op=starty", "start");
+  //sendPostRequest("m5stack-0-x.local", "/op=startx", "start");
+  //sendPostRequest("m5stack-y-z.local", "/op=startyz", "start");
 
-  if (FLAG_START_X == true && FLAG_START_Y == true) {
-    sendPostRequest("m5stack-0-0-0-1.local", "/op=startz", "start");
-  }
+  //sendGetRequest("m5stack-0-x.local", "/op=maxstepx", "");
+  //sendGetRequest("m5stack-y-z.local", "/op=maxstepy", "");
+  //sendGetRequest("m5stack-y-z.local", "/op=maxstepz", "");
 }
 
 void loop() {

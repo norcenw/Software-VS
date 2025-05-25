@@ -1,0 +1,7 @@
+Codice funzionante con 
+
+- Se abiliti il driver legacy: sì, VideoCapture(0) funzionerà anche con la Pi Cam.
+
+sudo raspi-config
+# Vai in Interface Options → Legacy Camera → Abilita
+sudo reboot

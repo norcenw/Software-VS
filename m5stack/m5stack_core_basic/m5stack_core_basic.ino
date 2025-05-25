@@ -28,27 +28,70 @@ const int DIR_PIN = 2;
 const int STEP_PIN = 5;
 const int ENA_PIN = 17;
 
-
-
-int COUNTER = 0;
-int FINAL_COUNTER = 0;
+unsigned long COUNTER = 0;
+unsigned long FINAL_COUNTER = 0;
 
 int THIS_ZONE = 0;
+int THIS_ZONE_STEP = 0;
+int THIS_DELAY = 0;
 
 int x = 0;
 
-void forwardMotor(int steps, int stepDelay) {
+// Percentuale fissa per rampa (15%)
+const unsigned int RAMP_PERCENT = 2;
+
+void forwardMotor(unsigned long steps, unsigned long stepDelay) {
+  // 1) protezione base
+  if (steps < 2 || stepDelay < 1) return;
+
+  // 2) calcolo rampSteps come 15% di steps
+  unsigned long rampSteps = (steps * RAMP_PERCENT) / 100;
+  // se 2*rampSteps supera il totale, riduco a metà
+  if (rampSteps * 2 > steps) {
+    rampSteps = steps / 2;
+  }
+  // almeno 1 passo
+  rampSteps = max(1UL, rampSteps);
+
+  // 3) passi centrali (plateau)
+  unsigned long middleSteps = steps - 2 * rampSteps;
+
+  // 4) prevenzione divisione per zero
+  unsigned long rampCounter = stepDelay / rampSteps;
+  if (rampCounter < 1) rampCounter = 1;
+
+  // 5) delay iniziale doppio (massimo) che scenderà a stepDelay
+  unsigned long rampDelay = stepDelay * 2;
+
+  // 6) setup motore
   digitalWrite(ENA_PIN, LOW);
   digitalWrite(DIR_PIN, LOW);
   delay(20);
 
-  for (int i = 0; i < steps; i++) {
-    // 1) Controlla stop
+  // 7) accelerazione (primi rampSteps)
+  for (unsigned long i = 0; i < rampSteps; i++) {
     if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
       stopMotor();
       return;
     }
-    // 2) Esegui un passo
+    COUNTER++;
+    Serial.println(COUNTER);
+    digitalWrite(STEP_PIN, HIGH);
+    delay(rampDelay);
+    digitalWrite(STEP_PIN, LOW);
+    delay(rampDelay);
+    // riduco rampDelay verso stepDelay
+    rampDelay = (rampDelay > stepDelay + rampCounter)
+                  ? rampDelay - rampCounter
+                  : stepDelay;
+  }
+
+  // 8) plateau (middleSteps)
+  for (unsigned long i = 0; i < middleSteps; i++) {
+    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+      stopMotor();
+      return;
+    }
     COUNTER++;
     Serial.println(COUNTER);
     digitalWrite(STEP_PIN, HIGH);
@@ -57,16 +100,72 @@ void forwardMotor(int steps, int stepDelay) {
     delay(stepDelay);
   }
 
+  // 9) decelerazione (ultimi rampSteps)
+  for (unsigned long i = 0; i < rampSteps; i++) {
+    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+      stopMotor();
+      return;
+    }
+    COUNTER++;
+    Serial.println(COUNTER);
+    digitalWrite(STEP_PIN, HIGH);
+    delay(rampDelay);
+    digitalWrite(STEP_PIN, LOW);
+    delay(rampDelay);
+    // aumento rampDelay verso 2×stepDelay
+    rampDelay += rampCounter;
+  }
+
+  // 10) stop motore
   digitalWrite(ENA_PIN, HIGH);
   delay(1000);
 }
 
-void backMotor(int steps, int stepDelay) {
+void backMotor(unsigned long steps, unsigned long stepDelay) {
+  // 1) protezione base
+  if (steps < 2 || stepDelay < 1) return;
+
+  // 2) calcolo rampSteps come 15% di steps
+  unsigned long rampSteps = (steps * RAMP_PERCENT) / 100;
+  if (rampSteps * 2 > steps) {
+    rampSteps = steps / 2;
+  }
+  rampSteps = max(1UL, rampSteps);
+
+  // 3) passi centrali (plateau)
+  unsigned long middleSteps = steps - 2 * rampSteps;
+
+  // 4) prevenzione divisione per zero
+  unsigned long rampCounter = stepDelay / rampSteps;
+  if (rampCounter < 1) rampCounter = 1;
+
+  // 5) delay iniziale doppio (massimo)
+  unsigned long rampDelay = stepDelay * 2;
+
+  // 6) setup motore (inversione)
   digitalWrite(ENA_PIN, LOW);
   digitalWrite(DIR_PIN, HIGH);
   delay(20);
 
-  for (int i = 0; i < steps; i++) {
+  // 7) accelerazione (primi rampSteps, decremento COUNTER)
+  for (unsigned long i = 0; i < rampSteps; i++) {
+    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+      stopMotor();
+      return;
+    }
+    COUNTER--;
+    Serial.println(COUNTER);
+    digitalWrite(STEP_PIN, HIGH);
+    delay(rampDelay);
+    digitalWrite(STEP_PIN, LOW);
+    delay(rampDelay);
+    rampDelay = (rampDelay > stepDelay + rampCounter)
+                  ? rampDelay - rampCounter
+                  : stepDelay;
+  }
+
+  // 8) plateau (middleSteps)
+  for (unsigned long i = 0; i < middleSteps; i++) {
     if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
       stopMotor();
       return;
@@ -79,16 +178,33 @@ void backMotor(int steps, int stepDelay) {
     delay(stepDelay);
   }
 
+  // 9) decelerazione (ultimi rampSteps)
+  for (unsigned long i = 0; i < rampSteps; i++) {
+    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+      stopMotor();
+      return;
+    }
+    COUNTER--;
+    Serial.println(COUNTER);
+    digitalWrite(STEP_PIN, HIGH);
+    delay(rampDelay);
+    digitalWrite(STEP_PIN, LOW);
+    delay(rampDelay);
+    rampDelay += rampCounter;
+  }
+
+  // 10) stop motore
   digitalWrite(ENA_PIN, HIGH);
   delay(1000);
 }
+
 /// Ferma il driver
 void stopMotor() {
   // disabilita subito
   digitalWrite(ENA_PIN, HIGH);
 }
 
-void configStart() {
+void configStart(WiFiClient &client) {
   bool CYCLE = true;
   digitalWrite(ENA_PIN, LOW);  /* accende driver */
   digitalWrite(DIR_PIN, HIGH); /* gira all'indietro */
@@ -127,17 +243,21 @@ void configStart() {
   FINAL_COUNTER = COUNTER;
   Serial.print("lunghezza totale: ");
   Serial.println(FINAL_COUNTER);
+
+  THIS_ZONE_STEP = calcolateDistance(0, false);
   delay(1000);
 
-  THIS_ZONE = calcolateDistance(0);
-
-  backMotor(FINAL_COUNTER - THIS_ZONE, 10);
+  backMotor(FINAL_COUNTER - THIS_ZONE_STEP, 10);
+  client.print("received");
 }
 
-int calcolateDistance(int POSITION) {
+int calcolateDistance(int POSITION, bool TYPE) {
   int PARTIAL_DISTANCE = FINAL_COUNTER / 9;
   int CENTER_DISTANCE = PARTIAL_DISTANCE / 2;
-  int DISTANCE = (PARTIAL_DISTANCE * POSITION) + CENTER_DISTANCE;
+  int DISTANCE = (PARTIAL_DISTANCE * POSITION);
+  if (!TYPE) {
+    DISTANCE = DISTANCE + CENTER_DISTANCE;
+  }
   Serial.print("calcolate distance: ");
   Serial.println(DISTANCE);
   return DISTANCE;
@@ -277,17 +397,56 @@ void writeFile(fs::FS &fs, const char *path, const char *message) {
 }
 
 void buttons_test() {
-  if (M5.BtnA.wasReleased() || M5.BtnA.pressedFor(1000, 200)) {
-    M5.Lcd.printf("A");
-    Serial.printf("A");
+  M5.update();
+  if (M5.BtnA.isPressed()) {
+    stopMotor();
+    digitalWrite(ENA_PIN, LOW);
+    digitalWrite(DIR_PIN, HIGH);
+    delay(20);
+
+    // Giro finché tieni premuto A
+    while (M5.BtnA.isPressed()) {
+      M5.update();  // IMPORTANTE!
+      if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+        break;
+      }
+      digitalWrite(STEP_PIN, HIGH);
+      delay(10);
+      digitalWrite(STEP_PIN, LOW);
+      delay(10);
+    }
+    stopMotor();
+    return;
   }
+
+  // Pulsante B: stop istantaneo o dopo 1s
+  M5.update();
   if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(1000, 200)) {
-    M5.Lcd.printf("B");
-    Serial.printf("B");
+    stopMotor();
+    return;
   }
-  if (M5.BtnC.wasReleased() || M5.BtnC.pressedFor(1000, 200)) {
-    M5.Lcd.printf("C");
-    Serial.printf("C");
+
+  // Giro finché tieni premuto C
+  M5.update();
+  if (M5.BtnC.isPressed()) {
+    stopMotor();
+    stopMotor();
+    digitalWrite(ENA_PIN, LOW);
+    digitalWrite(DIR_PIN, LOW);
+    delay(20);
+
+    while (M5.BtnC.isPressed()) {
+      M5.update();
+      if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+        break;
+      }
+      digitalWrite(STEP_PIN, HIGH);
+      delay(10);
+      digitalWrite(STEP_PIN, LOW);
+      delay(10);
+    }
+    stopMotor();
+    return;
   }
 }
 
@@ -447,7 +606,7 @@ void wifi_config(fs::FS &fs) {
           // Avvia server e mDNS
           server.begin();
 
-          String hostname = "m5stack-0-0-0-0";  // Fisso come richiesto
+          String hostname = "m5stack-0-x";  // Fisso come richiesto
           if (MDNS.begin(hostname.c_str())) {
             Serial.println("mDNS avviato come " + hostname);
             MDNS.addService("http", "tcp", 80);
@@ -677,8 +836,7 @@ unsigned long testFilledRoundRects() {
 /*******************************/
 /*******************************/
 /*******************************/
-
-void sendResponse(WiFiClient client, int statusCode, String contentType, String message) {
+void sendResponse(WiFiClient &client, int statusCode, String contentType, String message) {
   client.println("HTTP/1.1 " + String(statusCode) + " OK");
   client.println("Content-Type: " + contentType);
   client.println("Access-Control-Allow-Origin: *");
@@ -688,41 +846,80 @@ void sendResponse(WiFiClient client, int statusCode, String contentType, String 
   client.println(message);
 }
 
+void withdraw(WiFiClient &client, String body) {
+  extract(body);
+  THIS_ZONE_STEP = calcolateDistance(THIS_ZONE, true);
+  delay(1000);
+  forwardMotor(THIS_ZONE_STEP, THIS_DELAY);
+  client.print("received");
+}
+
 void handleClient(WiFiClient client) {
+  if (!client || !client.connected()) return;
   String requestLine = client.readStringUntil('\r');
   client.readStringUntil('\n');
-
+  int contentLength = 0;
   while (client.available()) {
     String headerLine = client.readStringUntil('\n');
-    if (headerLine == "\r" || headerLine == "\n") {
+    headerLine.trim(); 
+    if (headerLine.startsWith("Content-Length:")) {
+      contentLength = headerLine.substring(headerLine.indexOf(':') + 1).toInt();
+    }
+    if (headerLine.length() == 0) {
       break;
     }
   }
 
+  String body = "";
+  if (contentLength > 0) {
+    const int BUF_SIZE = 256;
+    int toRead = min(contentLength, BUF_SIZE - 1);
+    char buf[BUF_SIZE];
+    client.readBytes(buf, toRead);
+    buf[toRead] = '\0';
+    body = String(buf);
+  }
+
   if (requestLine.indexOf("POST /op=startx") != -1) {
     Serial.println("configStart");
-    configStart();
-    client.print("received");
+    configStart(client);
+  } else if (requestLine.indexOf("GET /op=maxstepx") != -1) {
+    client.print(FINAL_COUNTER);
   } else if (requestLine.indexOf("POST /op=withdrawx") != -1) {
     Serial.println("withdraw");
-    x = extract(body);
-    calcolateDistance(0)
-    forwardMotor();
-    client.print("received");
-  } else if (requestLine.indexOf("POST /op=returnx") != -1) {
+    withdraw(client, body);
+  } else if (requestLine.indexOf("GET /op=returnx") != -1) {
     Serial.println("return");
+    backMotor(FINAL_COUNTER - THIS_ZONE_STEP, THIS_DELAY);
     client.print("received");
   } else {
-    sendResponse(client, 404, "application/json", "{\"status\": \"error\", \"message\": \"Risorsa non trovata\"}");
+    sendResponse(client,404, "application/json","{\"status\":\"error\",\"message\":\"Risorsa non trovata\"}");
   }
 
   client.stop();
 }
 
-int extract(const String& body) {
-  String s = body;
-  s.trim();            // rimuove spazi e \r\n
-  return s.toInt();    // converte la stringa in intero
+void extract(const String &body) {
+  int values[2] = { 0, 0 };  // temporanei per position e delay
+  int idx = 0;               // indice del valore che stiamo riempiendo (0 o 1)
+  bool inNumber = false;     // true se siamo in mezzo a una sequenza di cifre
+
+  for (int i = 0; i < body.length() && idx < 2; ++i) {
+    char c = body.charAt(i);
+    if (isDigit(c)) {
+      // accumulo la cifra
+      inNumber = true;
+      values[idx] = values[idx] * 10 + (c - '0');
+    } else if (inNumber) {
+      // ho finito il numero corrente, passo al prossimo
+      inNumber = false;
+      idx++;
+    }
+  }
+
+  // assegno ai globali
+  THIS_ZONE = values[0];
+  THIS_DELAY = values[1];
 }
 
 /*******************************/

@@ -1547,7 +1547,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var boxInput = event.target;
     var valueInput = parseFloat(boxInput.value);
     var regex = /^[0-9.,]+$/;
-    if (!regex.test(boxInput.value) || valueInput < 0.15 || valueInput > 18.75) {
+    if (!regex.test(boxInput.value) || valueInput < 1 || valueInput > 100) {
       boxInput.style.borderColor = "crimson";
       boxInput.style.backgroundColor = "crimson";
       updateGlobalValidation();
