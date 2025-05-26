@@ -1,10 +1,6 @@
-#Software-VS
-
+# Software-VS
+ 
   Link delle altre repository del progetto VertiStock:
-
-  Software:  
-  
-  https://github.com/norcenw/Software-VS
 
   Meccanica:
   
