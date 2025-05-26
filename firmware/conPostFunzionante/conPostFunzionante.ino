@@ -1052,6 +1052,12 @@ void controlWarehouse(int whr, String name, String code, String count) {
   String filenameInt;
   String filenameStr;
 
+  int x, y;
+  int z = whr;
+
+  String sendX = "";
+  String sendYZ = "";
+
   switch (whr) {
     case 1:
       wh = wh1;
@@ -1074,7 +1080,12 @@ void controlWarehouse(int whr, String name, String code, String count) {
 
   for (int i = 0; i < size; i++) {
     if (wh[i][2] == 0) {
+      x = wh[i][0];
+      y = wh[i][1];
+
       wh[i][2] = 1;
+      
+
       wh_str[i][0] = name;
       wh_str[i][1] = code;
       wh_str[i][2] = count;
@@ -1082,6 +1093,15 @@ void controlWarehouse(int whr, String name, String code, String count) {
       break;
     }
   }
+
+  sendX = "{ position:" + String(x) + ", delay:" + String(DEFAULT_DELAY_X) + "}";
+  //sendYZ = "{y:" + String(y) + ",z:" + String(z) + "}";
+
+  //sendPostRequest("m5stack-y-z.local", "/op=p_p_y_z", send_y_z);
+  sendPostRequest("m5stack-0-x.local", "/op=p_p_x", String(sendX));
+
+  //sendGetRequest("m5stack-y-z.local", "/op=returnyz", "");
+  sendGetRequest("m5stack-0-x.local", "/op=returnx", "");
 
   Serial.println("name");
   Serial.println(name);
@@ -1313,10 +1333,10 @@ void setup() {
   wifiConfig();
 
   /**richieste a m5stack**/
-  //sendPostRequest("m5stack-0-x.local", "/op=startx", "start");
+  sendPostRequest("m5stack-0-x.local", "/op=startx", "start");
   //sendPostRequest("m5stack-y-z.local", "/op=startyz", "start");
 
-  //sendGetRequest("m5stack-0-x.local", "/op=maxstepx", "");
+  sendGetRequest("m5stack-0-x.local", "/op=maxstepx", "");
   //sendGetRequest("m5stack-y-z.local", "/op=maxstepy", "");
   //sendGetRequest("m5stack-y-z.local", "/op=maxstepz", "");
 }

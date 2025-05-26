@@ -37,7 +37,7 @@ int THIS_DELAY = 0;
 
 int x = 0;
 
-// Percentuale fissa per rampa (15%)
+// Percentuale fissa per rampa (2%)
 const unsigned int RAMP_PERCENT = 2;
 
 void forwardMotor(unsigned long steps, unsigned long stepDelay) {
@@ -854,6 +854,14 @@ void withdraw(WiFiClient &client, String body) {
   client.print("received");
 }
 
+void pickAndPlace(WiFiClient &client, String body) {
+  extract(body);
+  THIS_ZONE_STEP = calcolateDistance(THIS_ZONE, true);
+  delay(1000);
+  forwardMotor(THIS_ZONE_STEP, THIS_DELAY);
+  client.print("received");
+}
+
 void handleClient(WiFiClient client) {
   if (!client || !client.connected()) return;
   String requestLine = client.readStringUntil('\r');
@@ -861,7 +869,7 @@ void handleClient(WiFiClient client) {
   int contentLength = 0;
   while (client.available()) {
     String headerLine = client.readStringUntil('\n');
-    headerLine.trim(); 
+    headerLine.trim();
     if (headerLine.startsWith("Content-Length:")) {
       contentLength = headerLine.substring(headerLine.indexOf(':') + 1).toInt();
     }
@@ -888,12 +896,15 @@ void handleClient(WiFiClient client) {
   } else if (requestLine.indexOf("POST /op=withdrawx") != -1) {
     Serial.println("withdraw");
     withdraw(client, body);
+  } else if (requestLine.indexOf("POST /op=p_p_x") != -1) {
+    Serial.println("pick and place");
+    pickAndPlace(client, body);
   } else if (requestLine.indexOf("GET /op=returnx") != -1) {
     Serial.println("return");
-    backMotor(FINAL_COUNTER - THIS_ZONE_STEP, THIS_DELAY);
+    backMotor(THIS_ZONE_STEP, THIS_DELAY);
     client.print("received");
   } else {
-    sendResponse(client,404, "application/json","{\"status\":\"error\",\"message\":\"Risorsa non trovata\"}");
+    sendResponse(client, 404, "application/json", "{\"status\":\"error\",\"message\":\"Risorsa non trovata\"}");
   }
 
   client.stop();
@@ -920,6 +931,10 @@ void extract(const String &body) {
   // assegno ai globali
   THIS_ZONE = values[0];
   THIS_DELAY = values[1];
+  Serial.println("THIS_ZONE: ");
+  Serial.print(THIS_ZONE);
+  Serial.println("THIS_DELAY: ");
+  Serial.print(THIS_DELAY);
 }
 
 /*******************************/
