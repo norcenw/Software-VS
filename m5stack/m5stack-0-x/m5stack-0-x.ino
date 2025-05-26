@@ -37,10 +37,15 @@ int THIS_DELAY = 0;
 
 int x = 0;
 
+bool motorOK = false;
+bool limitSwitch1OK = false;
+bool limitSwitch2OK = false;
+
 // Percentuale fissa per rampa (2%)
 const unsigned int RAMP_PERCENT = 2;
 
 void forwardMotor(unsigned long steps, unsigned long stepDelay) {
+  drawStatusGrid(true, limitSwitch1OK, limitSwitch2OK);
   // 1) protezione base
   if (steps < 2 || stepDelay < 1) return;
 
@@ -118,10 +123,12 @@ void forwardMotor(unsigned long steps, unsigned long stepDelay) {
 
   // 10) stop motore
   digitalWrite(ENA_PIN, HIGH);
+  drawStatusGrid(motorOK, limitSwitch1OK, limitSwitch2OK);
   delay(1000);
 }
 
 void backMotor(unsigned long steps, unsigned long stepDelay) {
+  drawStatusGrid(true, limitSwitch1OK, limitSwitch2OK);
   // 1) protezione base
   if (steps < 2 || stepDelay < 1) return;
 
@@ -195,6 +202,7 @@ void backMotor(unsigned long steps, unsigned long stepDelay) {
 
   // 10) stop motore
   digitalWrite(ENA_PIN, HIGH);
+  drawStatusGrid(motorOK, limitSwitch1OK, limitSwitch2OK);
   delay(1000);
 }
 
@@ -202,6 +210,12 @@ void backMotor(unsigned long steps, unsigned long stepDelay) {
 void stopMotor() {
   // disabilita subito
   digitalWrite(ENA_PIN, HIGH);
+
+  if (digitalRead(endRun1) == LOW) {
+    drawStatusGrid(motorOK, true, limitSwitch2OK);
+  } else if (digitalRead(endRun2) == LOW) {
+    drawStatusGrid(motorOK, limitSwitch1OK, true);
+  }
 }
 
 void configStart(WiFiClient &client) {
@@ -209,7 +223,8 @@ void configStart(WiFiClient &client) {
   digitalWrite(ENA_PIN, LOW);  /* accende driver */
   digitalWrite(DIR_PIN, HIGH); /* gira all'indietro */
   delay(20);
-
+  
+  drawStatusGrid(motorOK, limitSwitch1OK, limitSwitch2OK);
   while (CYCLE) {
     if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
       stopMotor();
@@ -228,6 +243,7 @@ void configStart(WiFiClient &client) {
   digitalWrite(DIR_PIN, LOW); /* gira in avanti */
   delay(20);
 
+  drawStatusGrid(motorOK, limitSwitch1OK, limitSwitch2OK);
   while (CYCLE) {
     if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
       stopMotor();
@@ -248,6 +264,7 @@ void configStart(WiFiClient &client) {
   delay(1000);
 
   backMotor(FINAL_COUNTER - THIS_ZONE_STEP, 10);
+  drawStatusGrid(motorOK, limitSwitch1OK, limitSwitch2OK);
   client.print("received");
 }
 
@@ -316,8 +333,51 @@ void startupLogo() {
   delay(800);
 }
 
+void drawStatusGrid(bool motorOK, bool limit1OK, bool limit2OK) {
+  // 1) Sfondo nero
+  M5.Lcd.fillScreen(TFT_BLACK);
+
+  // 2) Parametri di layout
+  const uint8_t txtSize = 2;
+  const int16_t col1 = 10;                                           // prima colonna
+  const int16_t col2 = M5.Lcd.width() - ((M5.Lcd.width() / 3) / 2);  // seconda colonna
+  const int16_t rowHeight = 30;                                      // distanza verticale tra le righe
+  int16_t y = 20;                                                    // offset verticale iniziale
+
+  M5.Lcd.setTextSize(txtSize);
+
+  // --- Riga 0: MOTOR_X ---
+  M5.Lcd.setTextColor(TFT_BLUE);
+  M5.Lcd.setCursor(col1, y);
+  M5.Lcd.print("MOTOR_X");
+
+  M5.Lcd.setCursor(col2, y);
+  M5.Lcd.setTextColor(motorOK ? TFT_GREEN : TFT_RED);
+  M5.Lcd.print(motorOK ? "V" : "X");
+
+  // --- Riga 1: LIMIT_SWITCH_1 ---
+  y += rowHeight;
+  M5.Lcd.setTextColor(TFT_BLUE);
+  M5.Lcd.setCursor(col1, y);
+  M5.Lcd.print("LIMIT_SWITCH_1");
+
+  M5.Lcd.setCursor(col2, y);
+  M5.Lcd.setTextColor(limit1OK ? TFT_GREEN : TFT_RED);
+  M5.Lcd.print(limit1OK ? "V" : "X");
+
+  // --- Riga 2: LIMIT_SWITCH_2 ---
+  y += rowHeight;
+  M5.Lcd.setTextColor(TFT_BLUE);
+  M5.Lcd.setCursor(col1, y);
+  M5.Lcd.print("LIMIT_SWITCH_2");
+
+  M5.Lcd.setCursor(col2, y);
+  M5.Lcd.setTextColor(limit2OK ? TFT_GREEN : TFT_RED);
+  M5.Lcd.print(limit2OK ? "V" : "X");
+}
+
 // TF card test
-void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
+/* void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
   Serial.printf("Listing directory: %s\n", dirname);
   M5.Lcd.printf("Listing directory: %s\n", dirname);
 
@@ -394,7 +454,7 @@ void writeFile(fs::FS &fs, const char *path, const char *message) {
     Serial.println("Write failed");
     M5.Lcd.println("Write failed");
   }
-}
+} */
 
 void buttons_test() {
   M5.update();
@@ -1160,6 +1220,7 @@ void start() {
 void setup() {
   start();
   configPin();
+  drawStatusGrid(motorOK, limitSwitch1OK, limitSwitch2OK);
 }
 
 // the loop routine runs over and over again forever

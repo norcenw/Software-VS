@@ -18,6 +18,12 @@ MPU9250 IMU;
 
 WiFiServer server(80);
 
+bool motorYOK = false;
+bool motorZOK = false;
+bool limitY1OK = false;
+bool limitY2OK = false;
+bool limitZ1OK = false;
+bool limitZ2OK = false;
 
 /*finecorsa*/
 const int END_RUN_Y_1 = 21;
@@ -52,10 +58,13 @@ int x = 0;
 int y = 0;
 int z = 0;
 
+bool controlAxis = true;
+
 // Percentuale fissa per rampa (2%)
 const unsigned int RAMP_PERCENT = 2;
 
 void forwardMotorY(unsigned long steps, unsigned long stepDelay) {
+  drawStatusGrid(true, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   // 1) protezione base
   if (steps < 2 || stepDelay < 1) return;
 
@@ -133,10 +142,12 @@ void forwardMotorY(unsigned long steps, unsigned long stepDelay) {
 
   // 10) stop motore
   digitalWrite(ENA_PIN_Y, HIGH);
+  drawStatusGrid(false, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   delay(1000);
 }
 
 void backMotorY(unsigned long steps, unsigned long stepDelay) {
+  drawStatusGrid(true, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   // 1) protezione base
   if (steps < 2 || stepDelay < 1) return;
 
@@ -214,10 +225,12 @@ void backMotorY(unsigned long steps, unsigned long stepDelay) {
 
   // 10) stop motore
   digitalWrite(ENA_PIN_Y, HIGH);
+  drawStatusGrid(false, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   delay(1000);
 }
 
 void forwardMotorZ(unsigned long steps, unsigned long stepDelay) {
+  drawStatusGrid(motorYOK, true, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   // 1) protezione base
   if (steps < 2 || stepDelay < 1) return;
 
@@ -295,10 +308,12 @@ void forwardMotorZ(unsigned long steps, unsigned long stepDelay) {
 
   // 10) stop motore
   digitalWrite(ENA_PIN_Z, HIGH);
+  drawStatusGrid(motorYOK, false, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   delay(1000);
 }
 
 void backMotorZ(unsigned long steps, unsigned long stepDelay) {
+  drawStatusGrid(motorYOK, true, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   // 1) protezione base
   if (steps < 2 || stepDelay < 1) return;
 
@@ -376,6 +391,7 @@ void backMotorZ(unsigned long steps, unsigned long stepDelay) {
 
   // 10) stop motore
   digitalWrite(ENA_PIN_Z, HIGH);
+  drawStatusGrid(motorYOK, false, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   delay(1000);
 }
 
@@ -383,67 +399,120 @@ void backMotorZ(unsigned long steps, unsigned long stepDelay) {
 void stopMotorY() {
   // disabilita subito
   digitalWrite(ENA_PIN_Y, HIGH);
+  if (digitalRead(END_RUN_Y_1) == LOW) {
+    drawStatusGrid(motorYOK, motorZOK, true, limitY2OK, limitZ1OK, limitZ2OK);
+  } else if (digitalRead(END_RUN_Y_2) == LOW) {
+    drawStatusGrid(motorYOK, motorZOK, limitY1OK, true, limitZ1OK, limitZ2OK);
+  }
 }
 
 void stopMotorZ() {
   // disabilita subito
   digitalWrite(ENA_PIN_Z, HIGH);
+  if (digitalRead(END_RUN_Y_1) == LOW) {
+    drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, true, limitZ2OK);
+  } else if (digitalRead(END_RUN_Y_2) == LOW) {
+    drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, true);
+  }
 }
 
-void configStart(WiFiClient &client) {
+void configStartY(WiFiClient &client) {
   bool CYCLE = true;
-  digitalWrite(ENA_PIN, LOW);  /* accende driver */
-  digitalWrite(DIR_PIN, HIGH); /* gira all'indietro */
+  digitalWrite(ENA_PIN_Y, LOW);  /* accende driver */
+  digitalWrite(DIR_PIN_Y, HIGH); /* gira all'indietro */
   delay(20);
 
+  drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   while (CYCLE) {
-    if (digitalRead(END_RUN_1) == LOW || digitalRead(END_RUN_2) == LOW) {
+    if (digitalRead(END_RUN_Y_1) == LOW || digitalRead(END_RUN_Y_2) == LOW) {
       stopMotorY();
       CYCLE = false;
     }
-    digitalWrite(STEP_PIN, HIGH);
+    digitalWrite(STEP_PIN_Y, HIGH);
     delay(10);
-    digitalWrite(STEP_PIN, LOW);
+    digitalWrite(STEP_PIN_Y, LOW);
     delay(10);
   }
 
   delay(1000);
 
   CYCLE = true;
-  digitalWrite(ENA_PIN, LOW); /* accende driver */
-  digitalWrite(DIR_PIN, LOW); /* gira in avanti */
+  digitalWrite(ENA_PIN_Y, LOW); /* accende driver */
+  digitalWrite(DIR_PIN_Y, LOW); /* gira in avanti */
   delay(20);
 
+  drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   while (CYCLE) {
-    if (digitalRead(END_RUN_1) == LOW || digitalRead(END_RUN_2) == LOW) {
+    if (digitalRead(END_RUN_Y_1) == LOW || digitalRead(END_RUN_Y_2) == LOW) {
       stopMotorY();
       CYCLE = false;
     }
-    COUNTER++;
-    digitalWrite(STEP_PIN, HIGH);
+    COUNTER_Y++;
+    digitalWrite(STEP_PIN_Y, HIGH);
     delay(10);
-    digitalWrite(STEP_PIN, LOW);
+    digitalWrite(STEP_PIN_Y, LOW);
     delay(10);
   }
 
-  FINAL_COUNTER = COUNTER;
+  FINAL_COUNTER_Y = COUNTER_Y;
   Serial.print("lunghezza totale: ");
-  Serial.println(FINAL_COUNTER);
+  Serial.println(FINAL_COUNTER_Y);
 
-  THIS_ZONE_STEP = calcolateDistance(0, false);
-  delay(1000);
-
-  backMotor(FINAL_COUNTER - THIS_ZONE_STEP, 10);
+  backMotorY(FINAL_COUNTER_Y, 10);
+  drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   client.print("received");
 }
 
-int calcolateDistance(int POSITION, bool TYPE) {
-  int PARTIAL_DISTANCE = FINAL_COUNTER / 9;
-  int CENTER_DISTANCE = PARTIAL_DISTANCE / 2;
-  int DISTANCE = (PARTIAL_DISTANCE * POSITION);
-  if (!TYPE) {
-    DISTANCE = DISTANCE + CENTER_DISTANCE;
+void configStartZ(WiFiClient &client) {
+  bool CYCLE = true;
+  digitalWrite(ENA_PIN_Z, LOW);  /* accende driver */
+  digitalWrite(DIR_PIN_Z, HIGH); /* gira all'indietro */
+  delay(20);
+
+  drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
+  while (CYCLE) {
+    if (digitalRead(END_RUN_Z_1) == LOW || digitalRead(END_RUN_Z_2) == LOW) {
+      stopMotorZ();
+      CYCLE = false;
+    }
+    digitalWrite(STEP_PIN_Z, HIGH);
+    delay(10);
+    digitalWrite(STEP_PIN_Z, LOW);
+    delay(10);
   }
+
+  delay(1000);
+
+  CYCLE = true;
+  digitalWrite(ENA_PIN_Z, LOW); /* accende driver */
+  digitalWrite(DIR_PIN_Z, LOW); /* gira in avanti */
+  delay(20);
+
+  drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
+  while (CYCLE) {
+    if (digitalRead(END_RUN_Z_1) == LOW || digitalRead(END_RUN_Z_2) == LOW) {
+      stopMotorZ();
+      CYCLE = false;
+    }
+    COUNTER_Z++;
+    digitalWrite(STEP_PIN_Z, HIGH);
+    delay(10);
+    digitalWrite(STEP_PIN_Z, LOW);
+    delay(10);
+  }
+
+  FINAL_COUNTER_Z = COUNTER_Z;
+  Serial.print("lunghezza totale: ");
+  Serial.println(FINAL_COUNTER_Z);
+
+  backMotorZ(FINAL_COUNTER_Z / 2, 10);
+  drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
+  client.print("received");
+}
+
+int calcolateDistanceY(int POSITION, bool TYPE) {
+  int PARTIAL_DISTANCE = FINAL_COUNTER_Y / 3;
+  int DISTANCE = (PARTIAL_DISTANCE * POSITION);
   Serial.print("calcolate distance: ");
   Serial.println(DISTANCE);
   return DISTANCE;
@@ -451,28 +520,50 @@ int calcolateDistance(int POSITION, bool TYPE) {
 
 void configPin() {
   /* finecorsa */
-  pinMode(END_RUN_1, INPUT_PULLUP);
+  pinMode(END_RUN_Y_1, INPUT_PULLUP);
   M5.Lcd.setCursor(0, 20);
-  M5.Lcd.println("config pin limit switches 21");
-  Serial.println("config pin limit switches 21");
-  pinMode(END_RUN_2, INPUT_PULLUP);
+  M5.Lcd.println("config pin limit switches 21 Y");
+  Serial.println("config pin limit switches 21 Y");
+  pinMode(END_RUN_Y_2, INPUT_PULLUP);
   M5.Lcd.setCursor(0, 30);
-  M5.Lcd.println("config pin limit switches 22");
-  Serial.println("config pin limit switches 22");
+  M5.Lcd.println("config pin limit switches 22 Y");
+  Serial.println("config pin limit switches 22 Y");
+
+  pinMode(END_RUN_Z_1, INPUT_PULLUP);
+  M5.Lcd.setCursor(0, 40);
+  M5.Lcd.println("config pin limit switches 3 Z");
+  Serial.println("config pin limit switches 3 Z");
+  pinMode(END_RUN_Z_2, INPUT_PULLUP);
+  M5.Lcd.setCursor(0, 50);
+  M5.Lcd.println("config pin limit switches 1 Z");
+  Serial.println("config pin limit switches 1 Z");
 
   /* motori */
-  pinMode(DIR_PIN, OUTPUT);
-  M5.Lcd.setCursor(0, 40);
-  M5.Lcd.println("config pin DIR_PIN 2");
-  Serial.println("config pin limit switches 2");
-  pinMode(STEP_PIN, OUTPUT);
-  M5.Lcd.setCursor(0, 50);
-  M5.Lcd.println("config pin STEP_PIN 5");
-  Serial.println("config pin STEP_PIN 5");
+  pinMode(DIR_PIN_Y, OUTPUT);
   M5.Lcd.setCursor(0, 60);
-  pinMode(ENA_PIN, OUTPUT);
-  M5.Lcd.println("config pin ENA_PIN 17");
-  Serial.println("config pin ENA_PIN 17");
+  M5.Lcd.println("config pin DIR_PIN_Y 2");
+  Serial.println("config pin DIR_PIN_Y 2");
+  pinMode(STEP_PIN_Y, OUTPUT);
+  M5.Lcd.setCursor(0, 70);
+  M5.Lcd.println("config pin STEP_PIN_Y 5");
+  Serial.println("config pin STEP_PIN_Y 5");
+  M5.Lcd.setCursor(0, 80);
+  pinMode(ENA_PIN_Y, OUTPUT);
+  M5.Lcd.println("config pin ENA_PIN_Y 17");
+  Serial.println("config pin ENA_PIN_Y 17");
+
+  pinMode(DIR_PIN_Z, OUTPUT);
+  M5.Lcd.setCursor(0, 90);
+  M5.Lcd.println("config pin DIR_PIN_Z 25");
+  Serial.println("config pin DIR_PIN_Z 25");
+  pinMode(STEP_PIN_Z, OUTPUT);
+  M5.Lcd.setCursor(0, 100);
+  M5.Lcd.println("config pin STEP_PIN_Z 26");
+  Serial.println("config pin STEP_PIN_Z 26");
+  M5.Lcd.setCursor(0, 110);
+  pinMode(ENA_PIN_Z, OUTPUT);
+  M5.Lcd.println("config pin ENA_PIN_Z 35");
+  Serial.println("config pin ENA_PIN_Z 35");
 }
 
 void startupLogo() {
@@ -502,8 +593,56 @@ void startupLogo() {
   delay(800);
 }
 
+void drawStatusGrid(
+  bool motorYOK, bool motorZOK,
+  bool limitY1OK, bool limitY2OK,
+  bool limitZ1OK, bool limitZ2OK) {
+  // 1) Sfondo nero
+  M5.Lcd.fillScreen(TFT_BLACK);
+
+  // 2) Parametri di layout
+  const uint8_t txtSize = 2;
+  const int16_t col1 = 10;                                           // x prima colonna
+  const int16_t col2 = M5.Lcd.width() - ((M5.Lcd.width() / 3) / 2);  // x seconda colonna
+  const int16_t rowHeight = 20;                                      // distanza verticale tra le righe
+  int16_t y = 10;                                                    // offset verticale iniziale
+
+  M5.Lcd.setTextSize(txtSize);
+
+  // Labels e flags in array per comodità
+  const char *labels[6] = {
+    "MOTOR_Y",
+    "MOTOR_Z",
+    "LIMIT_SWITCH_Y_1",
+    "LIMIT_SWITCH_Y_2",
+    "LIMIT_SWITCH_Z_1",
+    "LIMIT_SWITCH_Z_2"
+  };
+  bool states[6] = {
+    motorYOK,
+    motorZOK,
+    limitY1OK,
+    limitY2OK,
+    limitZ1OK,
+    limitZ2OK
+  };
+
+  // 3) Disegno delle 6 righe
+  for (int i = 0; i < 6; ++i) {
+    // prima colonna: etichetta in blu
+    M5.Lcd.setTextColor(TFT_BLUE);
+    M5.Lcd.setCursor(col1, y + i * rowHeight);
+    M5.Lcd.print(labels[i]);
+
+    // seconda colonna: V o X in base allo stato
+    M5.Lcd.setCursor(col2, y + i * rowHeight);
+    M5.Lcd.setTextColor(states[i] ? TFT_GREEN : TFT_RED);
+    M5.Lcd.print(states[i] ? "V" : "X");
+  }
+}
+
 // TF card test
-void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
+/* void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
   Serial.printf("Listing directory: %s\n", dirname);
   M5.Lcd.printf("Listing directory: %s\n", dirname);
 
@@ -580,58 +719,150 @@ void writeFile(fs::FS &fs, const char *path, const char *message) {
     Serial.println("Write failed");
     M5.Lcd.println("Write failed");
   }
+} */
+
+void drawAxis() {
+  const int size = 3;       // ingrandimento del testo
+  const int w = 8 * size;   // larghezza approssimativa di un carattere
+  const int h = 12 * size;  // altezza approssimativa
+
+  int x = (M5.Lcd.width() - w) / 2;
+  int y = (M5.Lcd.height() - h) - 5;
+
+  // cancella l’area dello schermo
+  M5.Lcd.fillRect(x, y, w, h, TFT_BLACK);
+
+  // disegna la lettera
+  M5.Lcd.setTextSize(size);
+  M5.Lcd.setTextColor(TFT_RED);
+  M5.Lcd.setCursor(x, y);
+  M5.Lcd.print(controlAxis ? "Y" : "Z");
 }
 
 void buttons_test() {
   M5.update();
+
+  // --- stato statico per gestione doppio‐click B ---
+  static bool waitingSingle = false;  // flag per primo click B
+  static unsigned long tLast = 0;     // timestamp dell’ultimo rilascio B
+  const unsigned long dblT = 500;     // max ms per doppio‐click
+  unsigned long now = millis();
+
+  // --- 1) Rilascio di B: potenziale doppio‐click ---
+  if (M5.BtnB.wasReleased()) {
+    if (waitingSingle && (now - tLast) <= dblT) {
+      // secondo click entro timeout → cambio asse
+      controlAxis = !controlAxis;
+      waitingSingle = false;
+      drawAxis();  // aggiorna la lettera Y/Z sul display
+      return;
+    } else {
+      // primo click: entro in attesa
+      waitingSingle = true;
+      tLast = now;
+      return;
+    }
+  }
+
+  // --- 2) Timeout sul primo click → stop normale ---
+  if (waitingSingle && (now - tLast) > dblT) {
+    waitingSingle = false;
+    if (controlAxis) stopMotorY();
+    else stopMotorZ();
+    return;
+  }
+
+  // --- 3) Long-press su B (>1s) → stop immediato ---
+  if (M5.BtnB.pressedFor(1000, 200)) {
+    waitingSingle = false;
+    if (controlAxis) stopMotorY();
+    else stopMotorZ();
+    return;
+  }
+
+  // --- 4) Pulsante A: indietro finché tieni premuto ---
   if (M5.BtnA.isPressed()) {
-    stopMotorY();
-    digitalWrite(ENA_PIN, LOW);
-    digitalWrite(DIR_PIN, HIGH);
+    // setup
+    if (controlAxis) {
+      stopMotorY();
+      digitalWrite(ENA_PIN_Y, LOW);
+      digitalWrite(DIR_PIN_Y, HIGH);
+    } else {
+      stopMotorZ();
+      digitalWrite(ENA_PIN_Z, LOW);
+      digitalWrite(DIR_PIN_Z, HIGH);
+    }
     delay(20);
 
-    // Giro finché tieni premuto A
+    // ciclo di stepping
     while (M5.BtnA.isPressed()) {
-      M5.update();  // IMPORTANTE!
-      if (digitalRead(END_RUN_1) == LOW || digitalRead(END_RUN_2) == LOW) {
-        break;
+      M5.update();
+      bool end1 = controlAxis
+                    ? (digitalRead(END_RUN_Y_1) == LOW)
+                    : (digitalRead(END_RUN_Z_1) == LOW);
+      bool end2 = controlAxis
+                    ? (digitalRead(END_RUN_Y_2) == LOW)
+                    : (digitalRead(END_RUN_Z_2) == LOW);
+      if (end1 || end2) break;
+
+      if (controlAxis) {
+        digitalWrite(STEP_PIN_Y, HIGH);
+        delay(10);
+        digitalWrite(STEP_PIN_Y, LOW);
+      } else {
+        digitalWrite(STEP_PIN_Z, HIGH);
+        delay(10);
+        digitalWrite(STEP_PIN_Z, LOW);
       }
-      digitalWrite(STEP_PIN, HIGH);
-      delay(10);
-      digitalWrite(STEP_PIN, LOW);
       delay(10);
     }
-    stopMotorY();
+
+    // stop fine corsa
+    if (controlAxis) stopMotorY();
+    else stopMotorZ();
     return;
   }
 
-  // Pulsante B: stop istantaneo o dopo 1s
-  M5.update();
-  if (M5.BtnB.wasReleased() || M5.BtnB.pressedFor(1000, 200)) {
-    stopMotorY();
-    return;
-  }
-
-  // Giro finché tieni premuto C
-  M5.update();
+  // --- 5) Pulsante C: avanti finché tieni premuto ---
   if (M5.BtnC.isPressed()) {
-    stopMotorY();
-    stopMotorY();
-    digitalWrite(ENA_PIN, LOW);
-    digitalWrite(DIR_PIN, LOW);
+    // setup
+    if (controlAxis) {
+      stopMotorY();
+      digitalWrite(ENA_PIN_Y, LOW);
+      digitalWrite(DIR_PIN_Y, LOW);
+    } else {
+      stopMotorZ();
+      digitalWrite(ENA_PIN_Z, LOW);
+      digitalWrite(DIR_PIN_Z, LOW);
+    }
     delay(20);
 
+    // ciclo di stepping
     while (M5.BtnC.isPressed()) {
       M5.update();
-      if (digitalRead(END_RUN_1) == LOW || digitalRead(END_RUN_2) == LOW) {
-        break;
+      bool end1 = controlAxis
+                    ? (digitalRead(END_RUN_Y_1) == LOW)
+                    : (digitalRead(END_RUN_Z_1) == LOW);
+      bool end2 = controlAxis
+                    ? (digitalRead(END_RUN_Y_2) == LOW)
+                    : (digitalRead(END_RUN_Z_2) == LOW);
+      if (end1 || end2) break;
+
+      if (controlAxis) {
+        digitalWrite(STEP_PIN_Y, HIGH);
+        delay(10);
+        digitalWrite(STEP_PIN_Y, LOW);
+      } else {
+        digitalWrite(STEP_PIN_Z, HIGH);
+        delay(10);
+        digitalWrite(STEP_PIN_Z, LOW);
       }
-      digitalWrite(STEP_PIN, HIGH);
-      delay(10);
-      digitalWrite(STEP_PIN, LOW);
       delay(10);
     }
-    stopMotorY();
+
+    // stop fine corsa
+    if (controlAxis) stopMotorY();
+    else stopMotorZ();
     return;
   }
 }
@@ -1032,19 +1263,123 @@ void sendResponse(WiFiClient &client, int statusCode, String contentType, String
   client.println(message);
 }
 
-void withdraw(WiFiClient &client, String body) {
+void extract(const String &body) {
+  int values[4] = { 0, 0, 0, 0 };  // [zoneY, delayY, zoneZ, delayZ]
+  int idx = 0;                     // indice del valore corrente (0..3)
+  bool inNumber = false;           // true se siamo dentro a una sequenza di cifre
+
+  // Scorro la stringa fino a trovare 4 numeri oppure alla fine
+  for (int i = 0; i < body.length() && idx < 4; ++i) {
+    char c = body.charAt(i);
+    if (isDigit(c)) {
+      // accumulo la cifra
+      inNumber = true;
+      values[idx] = values[idx] * 10 + (c - '0');
+    } else if (inNumber) {
+      // terminatore del numero corrente → passo al prossimo
+      inNumber = false;
+      idx++;
+    }
+  }
+
+  // Se la stringa finisce con un numero senza delimitatore, incremento ancora idx
+  if (inNumber && idx < 4) {
+    idx++;
+  }
+
+  // Assegno ai globali
+  THIS_ZONE_Y = values[0];
+  THIS_DELAY_Y = values[1];
+  THIS_ZONE_Z = values[2];
+  THIS_DELAY_Z = values[3];
+
+  // Stampo su Serial in formato leggibile
+  Serial.print("THIS_ZONE_Y: ");
+  Serial.println(THIS_ZONE_Y);
+  Serial.print("THIS_DELAY_Y: ");
+  Serial.println(THIS_DELAY_Y);
+  Serial.print("THIS_ZONE_Z: ");
+  Serial.println(THIS_ZONE_Z);
+  Serial.print("THIS_DELAY_Z: ");
+  Serial.println(THIS_DELAY_Z);
+}
+
+void withdrawYZ(WiFiClient &client, String body) {
   extract(body);
-  THIS_ZONE_STEP = calcolateDistance(THIS_ZONE, true);
+  THIS_ZONE_STEP_Y = calcolateDistanceY(THIS_ZONE_Y, true);
   delay(1000);
-  forwardMotor(THIS_ZONE_STEP, THIS_DELAY);
+  forwardMotorY(THIS_ZONE_STEP_Y, THIS_DELAY_Y);
+
+  if (THIS_ZONE_Z == 1) {
+    forwardMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  } else {
+    backMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  }
+
+  forwardMotorY(30, THIS_DELAY_Y);
+
+  if (THIS_ZONE_Z == 1) {
+    backMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  } else {
+    forwardMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  }
+
+  backMotorY(30, THIS_DELAY_Y);
+
   client.print("received");
 }
 
-void pickAndPlace(WiFiClient &client, String body) {
+void withdrawZ(WiFiClient &client) {
+  if (THIS_ZONE_Z == 1) {
+    forwardMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  } else {
+    backMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  }
+
+  if (THIS_ZONE_Z == 1) {
+    backMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  } else {
+    forwardMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  }
+
+  client.print("received");
+}
+
+void pickAndPlaceYZ(WiFiClient &client, String body) {
   extract(body);
-  THIS_ZONE_STEP = calcolateDistance(THIS_ZONE, true);
-  delay(1000);
-  forwardMotor(THIS_ZONE_STEP, THIS_DELAY);
+
+  if (THIS_ZONE_Z == 1) {
+    forwardMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  } else {
+    backMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  }
+
+  forwardMotorY(30, THIS_DELAY_Y);
+
+  if (THIS_ZONE_Z == 1) {
+    backMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  } else {
+    forwardMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  }
+
+  THIS_ZONE_STEP_Y = calcolateDistanceY(THIS_ZONE_Y, true);
+  forwardMotorY(THIS_ZONE_STEP_Y - 30, THIS_DELAY_Y);
+  client.print("received");
+}
+
+void pickAndPlaceZ(WiFiClient &client) {
+  if (THIS_ZONE_Z == 1) {
+    forwardMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  } else {
+    backMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  }
+
+  if (THIS_ZONE_Z == 1) {
+    backMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  } else {
+    forwardMotorZ(FINAL_COUNTER_Z / 2, THIS_DELAY_Z);
+  }
+
   client.print("received");
 }
 
@@ -1074,53 +1409,37 @@ void handleClient(WiFiClient client) {
     body = String(buf);
   }
 
-  if (requestLine.indexOf("POST /op=startx") != -1) {
+  if (requestLine.indexOf("POST /op=starty") != -1) {
     Serial.println("configStart");
-    configStart(client);
-  } else if (requestLine.indexOf("GET /op=maxstepx") != -1) {
-    client.print(FINAL_COUNTER);
-  } else if (requestLine.indexOf("POST /op=withdrawx") != -1) {
-    Serial.println("withdraw");
-    withdraw(client, body);
-  } else if (requestLine.indexOf("POST /op=p_p_x") != -1) {
+    configStartY(client);
+  } else if (requestLine.indexOf("POST /op=startz") != -1) {
+    Serial.println("configStart");
+    configStartZ(client);
+  } else if (requestLine.indexOf("GET /op=maxstepy") != -1) {
+    client.print(FINAL_COUNTER_Y);
+  } else if (requestLine.indexOf("GET /op=maxstepz") != -1) {
+    client.print(FINAL_COUNTER_Z);
+  } else if (requestLine.indexOf("POST /op=withdrawyz") != -1) {
+    Serial.println("withdraw Y Z");
+    withdrawYZ(client, body);
+  } else if (requestLine.indexOf("GET /op=withdrawz") != -1) {
+    Serial.println("withdraw Z");
+    withdrawZ(client);
+  } else if (requestLine.indexOf("POST /op=p_p_y_z") != -1) {
     Serial.println("pick and place");
-    pickAndPlace(client, body);
-  } else if (requestLine.indexOf("GET /op=returnx") != -1) {
+    pickAndPlaceYZ(client, body);
+  } else if (requestLine.indexOf("GET /op=p_p_z") != -1) {
+    Serial.println("pick and place");
+    pickAndPlaceZ(client);
+  } else if (requestLine.indexOf("GET /op=returnyz") != -1) {
     Serial.println("return");
-    backMotor(THIS_ZONE_STEP, THIS_DELAY);
+    backMotorY(THIS_ZONE_STEP_Y, THIS_DELAY_Y);
     client.print("received");
   } else {
     sendResponse(client, 404, "application/json", "{\"status\":\"error\",\"message\":\"Risorsa non trovata\"}");
   }
 
   client.stop();
-}
-
-void extract(const String &body) {
-  int values[2] = { 0, 0 };  // temporanei per position e delay
-  int idx = 0;               // indice del valore che stiamo riempiendo (0 o 1)
-  bool inNumber = false;     // true se siamo in mezzo a una sequenza di cifre
-
-  for (int i = 0; i < body.length() && idx < 2; ++i) {
-    char c = body.charAt(i);
-    if (isDigit(c)) {
-      // accumulo la cifra
-      inNumber = true;
-      values[idx] = values[idx] * 10 + (c - '0');
-    } else if (inNumber) {
-      // ho finito il numero corrente, passo al prossimo
-      inNumber = false;
-      idx++;
-    }
-  }
-
-  // assegno ai globali
-  THIS_ZONE = values[0];
-  THIS_DELAY = values[1];
-  Serial.println("THIS_ZONE: ");
-  Serial.print(THIS_ZONE);
-  Serial.println("THIS_DELAY: ");
-  Serial.print(THIS_DELAY);
 }
 
 /*******************************/
@@ -1346,6 +1665,8 @@ void start() {
 void setup() {
   start();
   configPin();
+  drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
+  drawAxis();
 }
 
 // the loop routine runs over and over again forever

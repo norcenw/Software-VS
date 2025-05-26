@@ -952,7 +952,7 @@ void postOp3(WiFiClient& client) {
   }
 
   String x;
-  String y;
+  String yz;
 
   // 2) Prendi il valore x
   if (doc["z"].as<int>() == 1) {
@@ -962,17 +962,19 @@ void postOp3(WiFiClient& client) {
   }
 
   if (doc["z"].as<int>() == 1) {
-    y = "{ position:" + String(wh1[box][0]) + ", ydelay:" + String(DEFAULT_DELAY_Y) + ", zdelay:" + String(DEFAULT_DELAY_Z) + "}";
+    yz = "{ yposition:" + String(wh1[box][0]) + ", ydelay:" + String(DEFAULT_DELAY_Y) + ", zposition:1" + ", zdelay:" + String(DEFAULT_DELAY_Z) + "}";
   } else if (doc["z"].as<int>() == 2) {
-    y = "{ position:" + String(wh2[box][0]) + ", ydelay:" + String(DEFAULT_DELAY_Y) + ", zdelay:" + String(DEFAULT_DELAY_Z) + "}";
+    yz = "{ yposition:" + String(wh2[box][0]) + ", ydelay:" + String(DEFAULT_DELAY_Y) + ", zposition:2" + ", zdelay:" + String(DEFAULT_DELAY_Z) + "}";
   }
 
   if (allKeysPresent) {
     sendPostRequest("m5stack-0-x.local", "/op=withdrawx", String(x));
-    //sendPostRequest("m5stack-y-z.local", "/op=withdrawyz", String(y));
+    sendPostRequest("m5stack-y-z.local", "/op=withdrawyz", String(yz));
 
-    //sendGetRequest("m5stack-y-z.local", "/op=returnyz", "");
+    sendGetRequest("m5stack-y-z.local", "/op=returnyz", "");
     sendGetRequest("m5stack-0-x.local", "/op=returnx", "");
+
+    sendGetRequest("m5stack-y-z.local", "/op=withdrawz", "");
 
     sendResponse(client, 200, "application/json", "{\"status\": \"success\", \"message\": \"Tutti i dati sono stati ricevuti\"}");
     if (doc["z"].as<int>() == 1) {
@@ -1095,12 +1097,13 @@ void controlWarehouse(int whr, String name, String code, String count) {
   }
 
   sendX = "{ position:" + String(x) + ", delay:" + String(DEFAULT_DELAY_X) + "}";
-  //sendYZ = "{y:" + String(y) + ",z:" + String(z) + "}";
+  sendYZ = "{y:" + String(y) + ",z:" + String(z) + "}";
 
-  //sendPostRequest("m5stack-y-z.local", "/op=p_p_y_z", send_y_z);
+  sendPostRequest("m5stack-y-z.local", "/op=p_p_y_z", String(sendYZ));
   sendPostRequest("m5stack-0-x.local", "/op=p_p_x", String(sendX));
+  sendGetRequest("m5stack-y-z.local", "/op=p_p_z", "");
 
-  //sendGetRequest("m5stack-y-z.local", "/op=returnyz", "");
+  sendGetRequest("m5stack-y-z.local", "/op=returnyz", "");
   sendGetRequest("m5stack-0-x.local", "/op=returnx", "");
 
   Serial.println("name");
@@ -1334,11 +1337,12 @@ void setup() {
 
   /**richieste a m5stack**/
   sendPostRequest("m5stack-0-x.local", "/op=startx", "start");
-  //sendPostRequest("m5stack-y-z.local", "/op=startyz", "start");
+  sendPostRequest("m5stack-y-z.local", "/op=starty", "start");
+  sendPostRequest("m5stack-y-z.local", "/op=startz", "start");
 
   sendGetRequest("m5stack-0-x.local", "/op=maxstepx", "");
-  //sendGetRequest("m5stack-y-z.local", "/op=maxstepy", "");
-  //sendGetRequest("m5stack-y-z.local", "/op=maxstepz", "");
+  sendGetRequest("m5stack-y-z.local", "/op=maxstepy", "");
+  sendGetRequest("m5stack-y-z.local", "/op=maxstepz", "");
 }
 
 void loop() {
