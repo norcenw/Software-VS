@@ -41,8 +41,10 @@ bool motorOK = false;
 bool limitSwitch1OK = false;
 bool limitSwitch2OK = false;
 
-// Percentuale fissa per rampa (2%)
+String wifi[99][2];
+
 const unsigned int RAMP_PERCENT = 2;
+
 
 void forwardMotor(unsigned long steps, unsigned long stepDelay) {
   drawStatusGrid(true, limitSwitch1OK, limitSwitch2OK);
@@ -223,7 +225,7 @@ void configStart(WiFiClient &client) {
   digitalWrite(ENA_PIN, LOW);  /* accende driver */
   digitalWrite(DIR_PIN, HIGH); /* gira all'indietro */
   delay(20);
-  
+
   drawStatusGrid(motorOK, limitSwitch1OK, limitSwitch2OK);
   while (CYCLE) {
     if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
@@ -377,84 +379,47 @@ void drawStatusGrid(bool motorOK, bool limit1OK, bool limit2OK) {
 }
 
 // TF card test
-/* void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
-  Serial.printf("Listing directory: %s\n", dirname);
-  M5.Lcd.printf("Listing directory: %s\n", dirname);
+bool fileExists(fs::FS &fs, const char *path) {
+  bool exists = fs.exists(path);
+  Serial.printf("Checking if %s exists: %s\n", path, exists ? "YES" : "NO");
+  return exists;
+}
 
-  File root = fs.open(dirname);
-  if (!root) {
-    Serial.println("Failed to open directory");
-    M5.Lcd.println("Failed to open directory");
-    return;
+bool deleteFile(fs::FS &fs, const char *path) {
+  if (!fileExists(fs, path)) {
+    Serial.printf("deleteFile: %s non trovato\n", path);
+    return false;
   }
-  if (!root.isDirectory()) {
-    Serial.println("Not a directory");
-    M5.Lcd.println("Not a directory");
-    return;
-  }
+  bool ok = fs.remove(path);
+  Serial.printf("deleteFile %s: %s\n", path, ok ? "OK" : "FAIL");
+  return ok;
+}
 
-  File file = root.openNextFile();
-  while (file) {
-    if (file.isDirectory()) {
-      Serial.print("  DIR : ");
-      M5.Lcd.print("  DIR : ");
-      Serial.println(file.name());
-      M5.Lcd.println(file.name());
-      if (levels) {
-        listDir(fs, file.name(), levels - 1);
-      }
-    } else {
-      Serial.print("  FILE: ");
-      M5.Lcd.print("  FILE: ");
-      Serial.print(file.name());
-      M5.Lcd.print(file.name());
-      Serial.print("  SIZE: ");
-      M5.Lcd.print("  SIZE: ");
-      Serial.println(file.size());
-      M5.Lcd.println(file.size());
+bool writeNewFile(fs::FS &fs, const char *path, const char *message) {
+  // se esiste, lo rimuovo
+  if (fileExists(fs, path)) {
+    if (!deleteFile(fs, path)) {
+      Serial.println("writeNewFile: impossibile cancellare vecchio file");
+      return false;
     }
-    file = root.openNextFile();
   }
-}
-
-void readFile(fs::FS &fs, const char *path) {
-  Serial.printf("Reading file: %s\n", path);
-  M5.Lcd.printf("Reading file: %s\n", path);
-
-  File file = fs.open(path);
-  if (!file) {
-    Serial.println("Failed to open file for reading");
-    M5.Lcd.println("Failed to open file for reading");
-    return;
-  }
-
-  Serial.print("Read from file: ");
-  M5.Lcd.print("Read from file: ");
-  while (file.available()) {
-    int ch = file.read();
-    Serial.write(ch);
-    M5.Lcd.write(ch);
-  }
-}
-
-void writeFile(fs::FS &fs, const char *path, const char *message) {
-  Serial.printf("Writing file: %s\n", path);
-  M5.Lcd.printf("Writing file: %s\n", path);
-
+  // ora creo e scrivo
+  Serial.printf("Creating and writing %s\n", path);
   File file = fs.open(path, FILE_WRITE);
   if (!file) {
-    Serial.println("Failed to open file for writing");
-    M5.Lcd.println("Failed to open file for writing");
-    return;
+    Serial.println("writeNewFile: apertura fallita");
+    return false;
   }
   if (file.print(message)) {
-    Serial.println("File written");
-    M5.Lcd.println("File written");
+    Serial.println("writeNewFile: scrittura OK");
+    file.close();
+    return true;
   } else {
-    Serial.println("Write failed");
-    M5.Lcd.println("Write failed");
+    Serial.println("writeNewFile: scrittura FALLITA");
+    file.close();
+    return false;
   }
-} */
+}
 
 void buttons_test() {
   M5.update();
@@ -963,6 +928,18 @@ void handleClient(WiFiClient client) {
     Serial.println("return");
     backMotor(THIS_ZONE_STEP, THIS_DELAY);
     client.print("received");
+  } else if (requestLine.indexOf("POST /op=wifi") != -1) {
+    Serial.println("wifi");
+
+    if (writeNewFile(SD, "/WIFI.CSV", body.c_str())) {
+      Serial.println("File aggiornato con successo");
+      M5.Lcd.println("File aggiornato con successo");
+    } else {
+      Serial.println("Errore nell'aggiornamento file");
+      M5.Lcd.println("Errore nell'aggiornamento file");
+    }
+
+    client.print("received");
   } else {
     sendResponse(client, 404, "application/json", "{\"status\":\"error\",\"message\":\"Risorsa non trovata\"}");
   }
@@ -1207,13 +1184,6 @@ void start() {
   // TF card test
   M5.Lcd.fillScreen(BLACK);
   M5.Lcd.setCursor(0, 10);
-  //M5.Lcd.printf("TF card test:\r\n");
-  // digitalWrite(TFT_CS, 1);
-  /* listDir(SD, "/", 0);
-  writeFile(SD, "/hello.txt", "Hello world");
-  readFile(SD, "/hello.txt"); */
-
-  //configuration Pin
 }
 
 // the setup routine runs once when M5Stack starts up

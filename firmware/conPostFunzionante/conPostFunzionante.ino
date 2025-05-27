@@ -73,7 +73,6 @@ float calcSpeed(float step_delay_ms, int microStep) {
   return rpm;
 }
 
-
 void setupDisplay() {
   pinMode(displayPin, OUTPUT);
   digitalWrite(displayPin, HIGH);
@@ -665,6 +664,8 @@ void postOp2(WiFiClient& client) {
 }
 
 void recreateFileWifi(const char* filename, const JsonDocument& doc, int count) {
+  String sendRow = ""; 
+
   if (SD.exists(filename)) {
     SD.remove(filename);
   }
@@ -680,11 +681,15 @@ void recreateFileWifi(const char* filename, const JsonDocument& doc, int count) 
     String passKey = "pass-" + String(i + 1);
 
     String riga = doc[ssidKey].as<String>() + "," + doc[passKey].as<String>() + "\n";
+    sendRow += doc[ssidKey].as<String>() + "," + doc[passKey].as<String>() + "\n";
     file.print(riga);
   }
 
   file.close();
   printMessage("OPERATION", "file saved: WIFI.CSV", true, false);
+
+  sendPostRequest("m5stack-0-x.local", "/op=wifi", sendRow);
+  sendPostRequest("m5stack-y-z.local", "/op=wifi", sendRow);
 }
 
 void postWifi(WiFiClient& client) {
@@ -759,8 +764,7 @@ void postWifi(WiFiClient& client) {
 
   recreateFileWifi("/WIFI.CSV", doc, count);
 
-  sendResponse(client, 200, "application/json",
-               "{\"status\": \"success\", \"message\": \"Tutti i dati sono stati ricevuti e salvati\"}");
+  sendResponse(client, 200, "application/json","{\"status\": \"success\", \"message\": \"Tutti i dati sono stati ricevuti e salvati\"}");
 }
 
 void postRestart(WiFiClient& client) {
