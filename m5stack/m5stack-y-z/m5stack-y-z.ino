@@ -1401,10 +1401,8 @@ void handleClient(WiFiClient client) {
 
     if (writeNewFile(SD, "/WIFI.CSV", body.c_str())) {
       Serial.println("File aggiornato con successo");
-      M5.Lcd.println("File aggiornato con successo");
     } else {
       Serial.println("Errore nell'aggiornamento file");
-      M5.Lcd.println("Errore nell'aggiornamento file");
     }
 
     client.print("received");
