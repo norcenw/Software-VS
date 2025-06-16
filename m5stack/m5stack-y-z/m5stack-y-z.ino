@@ -418,17 +418,32 @@ void stopMotorZ() {
 }
 
 void configStartY(WiFiClient &client) {
-  bool CYCLE = true;
   digitalWrite(ENA_PIN_Y, LOW);  /* accende driver */
   digitalWrite(DIR_PIN_Y, HIGH); /* gira all'indietro */
   delay(20);
 
   drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
-  while (CYCLE) {
+  while (true) {
+    // se uno dei due fine‐corsa è attivato (LOW)
     if (digitalRead(END_RUN_Y_1) == LOW || digitalRead(END_RUN_Y_2) == LOW) {
+      // inverti la direzione
+      digitalWrite(DIR_PIN_Y, LOW);
+      delay(5);  // piccolo intervallo per la stabilità
+
+      // continua a fare passi finché almeno un fine‐corsa resta LOW
+      while (digitalRead(END_RUN_Y_1) == LOW || digitalRead(END_RUN_Y_2) == LOW) {
+        digitalWrite(STEP_PIN_Y, HIGH);
+        delay(10);
+        digitalWrite(STEP_PIN_Y, LOW);
+        delay(10);
+      }
+
+      // una volta tornati entrambi HIGH, ferma il motore e interrompi il ciclo
       stopMotorY();
-      CYCLE = false;
+      break;
     }
+
+    // altrimenti continua nel verso “forward”
     digitalWrite(STEP_PIN_Y, HIGH);
     delay(10);
     digitalWrite(STEP_PIN_Y, LOW);
@@ -437,18 +452,33 @@ void configStartY(WiFiClient &client) {
 
   delay(1000);
 
-  CYCLE = true;
   digitalWrite(ENA_PIN_Y, LOW); /* accende driver */
   digitalWrite(DIR_PIN_Y, LOW); /* gira in avanti */
   delay(20);
 
   drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
-  while (CYCLE) {
+  while (true) {
+    // se uno dei due fine‐corsa è attivato (LOW)
     if (digitalRead(END_RUN_Y_1) == LOW || digitalRead(END_RUN_Y_2) == LOW) {
+      // inverti la direzione
+      digitalWrite(DIR_PIN_Y, HIGH);
+      delay(5);  // piccolo intervallo per la stabilità
+
+      // continua a fare passi finché almeno un fine‐corsa resta LOW
+      while (digitalRead(END_RUN_Y_1) == LOW || digitalRead(END_RUN_Y_2) == LOW) {
+        digitalWrite(STEP_PIN_Y, HIGH);
+        delay(10);
+        digitalWrite(STEP_PIN_Y, LOW);
+        delay(10);
+      }
+
+      // una volta tornati entrambi HIGH, ferma il motore e interrompi il ciclo
       stopMotorY();
-      CYCLE = false;
+      break;
     }
+
     COUNTER_Y++;
+    // altrimenti continua nel verso “forward”
     digitalWrite(STEP_PIN_Y, HIGH);
     delay(10);
     digitalWrite(STEP_PIN_Y, LOW);
@@ -465,17 +495,32 @@ void configStartY(WiFiClient &client) {
 }
 
 void configStartZ(WiFiClient &client) {
-  bool CYCLE = true;
   digitalWrite(ENA_PIN_Z, LOW);  /* accende driver */
   digitalWrite(DIR_PIN_Z, HIGH); /* gira all'indietro */
   delay(20);
 
   drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
-  while (CYCLE) {
+  while (true) {
+    // se uno dei due fine‐corsa è attivato (LOW)
     if (digitalRead(END_RUN_Z_1) == LOW || digitalRead(END_RUN_Z_2) == LOW) {
+      // inverti la direzione
+      digitalWrite(DIR_PIN_Z, LOW);
+      delay(5);  // piccolo intervallo per la stabilità
+
+      // continua a fare passi finché almeno un fine‐corsa resta LOW
+      while (digitalRead(END_RUN_Z_1) == LOW || digitalRead(END_RUN_Z_2) == LOW) {
+        digitalWrite(STEP_PIN_Z, HIGH);
+        delay(10);
+        digitalWrite(STEP_PIN_Z, LOW);
+        delay(10);
+      }
+
+      // una volta tornati entrambi HIGH, ferma il motore e interrompi il ciclo
       stopMotorZ();
-      CYCLE = false;
+      break;
     }
+
+    // altrimenti continua nel verso “forward”
     digitalWrite(STEP_PIN_Z, HIGH);
     delay(10);
     digitalWrite(STEP_PIN_Z, LOW);
@@ -484,18 +529,33 @@ void configStartZ(WiFiClient &client) {
 
   delay(1000);
 
-  CYCLE = true;
   digitalWrite(ENA_PIN_Z, LOW); /* accende driver */
   digitalWrite(DIR_PIN_Z, LOW); /* gira in avanti */
   delay(20);
 
   drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
-  while (CYCLE) {
+  while (true) {
+    // se uno dei due fine‐corsa è attivato (LOW)
     if (digitalRead(END_RUN_Z_1) == LOW || digitalRead(END_RUN_Z_2) == LOW) {
+      // inverti la direzione
+      digitalWrite(DIR_PIN_Z, HIGH);
+      delay(5);  // piccolo intervallo per la stabilità
+
+      // continua a fare passi finché almeno un fine‐corsa resta LOW
+      while (digitalRead(END_RUN_Z_1) == LOW || digitalRead(END_RUN_Z_2) == LOW) {
+        digitalWrite(STEP_PIN_Z, HIGH);
+        delay(10);
+        digitalWrite(STEP_PIN_Z, LOW);
+        delay(10);
+      }
+
+      // una volta tornati entrambi HIGH, ferma il motore e interrompi il ciclo
       stopMotorZ();
-      CYCLE = false;
+      break;
     }
+
     COUNTER_Z++;
+    // altrimenti continua nel verso “forward”
     digitalWrite(STEP_PIN_Z, HIGH);
     delay(10);
     digitalWrite(STEP_PIN_Z, LOW);

@@ -221,17 +221,32 @@ void stopMotor() {
 }
 
 void configStart(WiFiClient &client) {
-  bool CYCLE = true;
   digitalWrite(ENA_PIN, LOW);  /* accende driver */
   digitalWrite(DIR_PIN, HIGH); /* gira all'indietro */
   delay(20);
 
   drawStatusGrid(motorOK, limitSwitch1OK, limitSwitch2OK);
-  while (CYCLE) {
-    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+  while (true) {
+    // se uno dei due fine‐corsa è attivato (LOW)
+    if (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
+      // inverti la direzione
+      digitalWrite(DIR_PIN, LOW);
+      delay(5);  // piccolo intervallo per la stabilità
+
+      // continua a fare passi finché almeno un fine‐corsa resta LOW
+      while (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
+        digitalWrite(STEP_PIN, HIGH);
+        delay(10);
+        digitalWrite(STEP_PIN, LOW);
+        delay(10);
+      }
+
+      // una volta tornati entrambi HIGH, ferma il motore e interrompi il ciclo
       stopMotor();
-      CYCLE = false;
+      break;
     }
+
+    // altrimenti continua nel verso “forward”
     digitalWrite(STEP_PIN, HIGH);
     delay(10);
     digitalWrite(STEP_PIN, LOW);
@@ -240,18 +255,33 @@ void configStart(WiFiClient &client) {
 
   delay(1000);
 
-  CYCLE = true;
   digitalWrite(ENA_PIN, LOW); /* accende driver */
   digitalWrite(DIR_PIN, LOW); /* gira in avanti */
   delay(20);
 
   drawStatusGrid(motorOK, limitSwitch1OK, limitSwitch2OK);
-  while (CYCLE) {
-    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+  while (true) {
+    // se uno dei due fine‐corsa è attivato (LOW)
+    if (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
+      // inverti la direzione
+      digitalWrite(DIR_PIN, HIGH);
+      delay(5);  // piccolo intervallo per la stabilità
+
+      // continua a fare passi finché almeno un fine‐corsa resta LOW
+      while (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
+        digitalWrite(STEP_PIN, HIGH);
+        delay(10);
+        digitalWrite(STEP_PIN, LOW);
+        delay(10);
+      }
+
+      // una volta tornati entrambi HIGH, ferma il motore e interrompi il ciclo
       stopMotor();
-      CYCLE = false;
+      break;
     }
+
     COUNTER++;
+    // altrimenti continua nel verso “forward”
     digitalWrite(STEP_PIN, HIGH);
     delay(10);
     digitalWrite(STEP_PIN, LOW);
@@ -314,7 +344,7 @@ void startupLogo() {
   M5.Lcd.setBrightness(0);
   M5.Lcd.pushImage(0, 0, 320, 240, (uint16_t *)gImage_logo);
   for (int i = 0; i < length; i++) {
-    //dacWrite(SPEAKER_PIN, m5stack_startup_music[i] >> 2);
+    dacWrite(SPEAKER_PIN, m5stack_startup_music[i] >> 2);
     delayMicroseconds(40);
     brightness = (i / 157);
     if (pre_brightness != brightness) {
@@ -323,13 +353,13 @@ void startupLogo() {
     }
   }
 
-  /* for (int i = 255; i >= 0; i--) {
+  for (int i = 255; i >= 0; i--) {
     M5.Lcd.setBrightness(i);
     if (i <= 32) {
       dacWrite(SPEAKER_PIN, i);
     }
     delay(10);
-  } */
+  }
 
   M5.Lcd.fillScreen(BLACK);
   delay(800);
