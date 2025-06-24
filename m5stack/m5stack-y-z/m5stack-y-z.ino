@@ -27,9 +27,9 @@ bool limitZ2OK = false;
 
 /*finecorsa*/
 const int END_RUN_Y_1 = 21;
-const int END_RUN_Y_2 = 22;
-const int END_RUN_Z_1 = 34;
-const int END_RUN_Z_2 = 35;
+const int END_RUN_Y_2 = 1;
+const int END_RUN_Z_1 = 22;
+const int END_RUN_Z_2 = 3;
 
 /* motori */
 const int DIR_PIN_Y = 2;
@@ -38,7 +38,7 @@ const int ENA_PIN_Y = 17;
 
 const int DIR_PIN_Z = 25;
 const int STEP_PIN_Z = 26;
-const int ENA_PIN_Z = 33;
+const int ENA_PIN_Z = 16;
 
 unsigned long COUNTER_Y = 0;
 unsigned long FINAL_COUNTER_Y = 0;
@@ -424,6 +424,7 @@ void configStartY(WiFiClient &client) {
 
   drawStatusGrid(motorYOK, motorZOK, limitY1OK, limitY2OK, limitZ1OK, limitZ2OK);
   while (true) {
+    Serial.println("init configStartY");
     // se uno dei due fine‐corsa è attivato (LOW)
     if (digitalRead(END_RUN_Y_1) == LOW || digitalRead(END_RUN_Y_2) == LOW) {
       // inverti la direzione
@@ -633,7 +634,7 @@ void startupLogo() {
   M5.Lcd.setBrightness(0);
   M5.Lcd.pushImage(0, 0, 320, 240, (uint16_t *)gImage_logo);
   for (int i = 0; i < length; i++) {
-    //dacWrite(SPEAKER_PIN, m5stack_startup_music[i] >> 2);
+    dacWrite(SPEAKER_PIN, m5stack_startup_music[i] >> 2);
     delayMicroseconds(40);
     brightness = (i / 157);
     if (pre_brightness != brightness) {
@@ -642,13 +643,13 @@ void startupLogo() {
     }
   }
 
-  /* for (int i = 255; i >= 0; i--) {
+  for (int i = 255; i >= 0; i--) {
     M5.Lcd.setBrightness(i);
     if (i <= 32) {
       dacWrite(SPEAKER_PIN, i);
     }
     delay(10);
-  } */
+  }
 
   M5.Lcd.fillScreen(BLACK);
   delay(800);
@@ -761,8 +762,6 @@ void drawAxis() {
 }
 
 void buttons_test() {
-  M5.update();
-
   // --- stato statico per gestione doppio‐click B ---
   static bool waitingSingle = false;  // flag per primo click B
   static unsigned long tLast = 0;     // timestamp dell’ultimo rilascio B
@@ -770,6 +769,7 @@ void buttons_test() {
   unsigned long now = millis();
 
   // --- 1) Rilascio di B: potenziale doppio‐click ---
+  M5.update();
   if (M5.BtnB.wasReleased()) {
     if (waitingSingle && (now - tLast) <= dblT) {
       // secondo click entro timeout → cambio asse
@@ -793,17 +793,10 @@ void buttons_test() {
     return;
   }
 
-  // --- 3) Long-press su B (>1s) → stop immediato ---
-  if (M5.BtnB.pressedFor(1000, 200)) {
-    waitingSingle = false;
-    if (controlAxis) stopMotorY();
-    else stopMotorZ();
-    return;
-  }
-
   // --- 4) Pulsante A: indietro finché tieni premuto ---
+  M5.update();
   if (M5.BtnA.isPressed()) {
-    // setup
+
     if (controlAxis) {
       stopMotorY();
       digitalWrite(ENA_PIN_Y, LOW);
@@ -813,6 +806,7 @@ void buttons_test() {
       digitalWrite(ENA_PIN_Z, LOW);
       digitalWrite(DIR_PIN_Z, HIGH);
     }
+
     delay(20);
 
     // ciclo di stepping
@@ -835,7 +829,6 @@ void buttons_test() {
         delay(10);
         digitalWrite(STEP_PIN_Z, LOW);
       }
-      delay(10);
     }
 
     // stop fine corsa
@@ -844,7 +837,17 @@ void buttons_test() {
     return;
   }
 
+  // --- 3) Long-press su B (>1s) → stop immediato ---
+  M5.update();
+  if (M5.BtnB.pressedFor(1000, 200)) {
+    waitingSingle = false;
+    if (controlAxis) stopMotorY();
+    else stopMotorZ();
+    return;
+  }
+
   // --- 5) Pulsante C: avanti finché tieni premuto ---
+  M5.update();
   if (M5.BtnC.isPressed()) {
     // setup
     if (controlAxis) {
@@ -878,7 +881,6 @@ void buttons_test() {
         delay(10);
         digitalWrite(STEP_PIN_Z, LOW);
       }
-      delay(10);
     }
 
     // stop fine corsa
@@ -1431,10 +1433,10 @@ void handleClient(WiFiClient client) {
   }
 
   if (requestLine.indexOf("POST /op=starty") != -1) {
-    Serial.println("configStart");
+    Serial.println("configStart Y");
     configStartY(client);
   } else if (requestLine.indexOf("POST /op=startz") != -1) {
-    Serial.println("configStart");
+    Serial.println("configStart Z");
     configStartZ(client);
   } else if (requestLine.indexOf("GET /op=maxstepy") != -1) {
     client.print(FINAL_COUNTER_Y);

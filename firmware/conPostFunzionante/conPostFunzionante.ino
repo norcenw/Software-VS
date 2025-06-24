@@ -664,7 +664,7 @@ void postOp2(WiFiClient& client) {
 }
 
 void recreateFileWifi(const char* filename, const JsonDocument& doc, int count) {
-  String sendRow = ""; 
+  String sendRow = "";
 
   if (SD.exists(filename)) {
     SD.remove(filename);
@@ -764,7 +764,7 @@ void postWifi(WiFiClient& client) {
 
   recreateFileWifi("/WIFI.CSV", doc, count);
 
-  sendResponse(client, 200, "application/json","{\"status\": \"success\", \"message\": \"Tutti i dati sono stati ricevuti e salvati\"}");
+  sendResponse(client, 200, "application/json", "{\"status\": \"success\", \"message\": \"Tutti i dati sono stati ricevuti e salvati\"}");
 }
 
 void postRestart(WiFiClient& client) {
@@ -852,7 +852,6 @@ void sendPostRequest(const char* host, const char* path, const String& message) 
       }
     }
 
-    client.stop();
 
     Serial.println("Risposta ricevuta:");
     Serial.println(response);
@@ -865,6 +864,9 @@ void sendPostRequest(const char* host, const char* path, const String& message) 
       delay(1000);
     }
   }
+
+  client.stop();
+  Serial.println("client chiuso");
 }
 
 void sendGetRequest(const char* host, const char* path, const String& queryParams = "") {
@@ -914,6 +916,9 @@ void sendGetRequest(const char* host, const char* path, const String& queryParam
 
     break;
   }
+
+  client.stop();
+  Serial.println("client chiuso");
 }
 
 void postOp3(WiFiClient& client) {
@@ -1090,7 +1095,7 @@ void controlWarehouse(int whr, String name, String code, String count) {
       y = wh[i][1];
 
       wh[i][2] = 1;
-      
+
 
       wh_str[i][0] = name;
       wh_str[i][1] = code;

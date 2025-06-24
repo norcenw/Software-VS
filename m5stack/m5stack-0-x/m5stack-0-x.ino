@@ -20,8 +20,8 @@ WiFiServer server(80);
 
 
 /*finecorsa*/
-const int endRun1 = 21;
-const int endRun2 = 22;
+const int END1_PIN = 21;
+const int END2_PIN = 22;
 
 /* motori */
 const int DIR_PIN = 2;
@@ -77,7 +77,7 @@ void forwardMotor(unsigned long steps, unsigned long stepDelay) {
 
   // 7) accelerazione (primi rampSteps)
   for (unsigned long i = 0; i < rampSteps; i++) {
-    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+    if (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
       stopMotor();
       return;
     }
@@ -95,7 +95,7 @@ void forwardMotor(unsigned long steps, unsigned long stepDelay) {
 
   // 8) plateau (middleSteps)
   for (unsigned long i = 0; i < middleSteps; i++) {
-    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+    if (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
       stopMotor();
       return;
     }
@@ -109,7 +109,7 @@ void forwardMotor(unsigned long steps, unsigned long stepDelay) {
 
   // 9) decelerazione (ultimi rampSteps)
   for (unsigned long i = 0; i < rampSteps; i++) {
-    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+    if (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
       stopMotor();
       return;
     }
@@ -158,7 +158,7 @@ void backMotor(unsigned long steps, unsigned long stepDelay) {
 
   // 7) accelerazione (primi rampSteps, decremento COUNTER)
   for (unsigned long i = 0; i < rampSteps; i++) {
-    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+    if (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
       stopMotor();
       return;
     }
@@ -175,7 +175,7 @@ void backMotor(unsigned long steps, unsigned long stepDelay) {
 
   // 8) plateau (middleSteps)
   for (unsigned long i = 0; i < middleSteps; i++) {
-    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+    if (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
       stopMotor();
       return;
     }
@@ -189,7 +189,7 @@ void backMotor(unsigned long steps, unsigned long stepDelay) {
 
   // 9) decelerazione (ultimi rampSteps)
   for (unsigned long i = 0; i < rampSteps; i++) {
-    if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+    if (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
       stopMotor();
       return;
     }
@@ -213,9 +213,9 @@ void stopMotor() {
   // disabilita subito
   digitalWrite(ENA_PIN, HIGH);
 
-  if (digitalRead(endRun1) == LOW) {
+  if (digitalRead(END1_PIN) == LOW) {
     drawStatusGrid(motorOK, true, limitSwitch2OK);
-  } else if (digitalRead(endRun2) == LOW) {
+  } else if (digitalRead(END2_PIN) == LOW) {
     drawStatusGrid(motorOK, limitSwitch1OK, true);
   }
 }
@@ -314,11 +314,11 @@ int calcolateDistance(int POSITION, bool TYPE) {
 
 void configPin() {
   /* finecorsa */
-  pinMode(endRun1, INPUT_PULLUP);
+  pinMode(END1_PIN, INPUT_PULLUP);
   M5.Lcd.setCursor(0, 20);
   M5.Lcd.println("config pin limit switches 21");
   Serial.println("config pin limit switches 21");
-  pinMode(endRun2, INPUT_PULLUP);
+  pinMode(END2_PIN, INPUT_PULLUP);
   M5.Lcd.setCursor(0, 30);
   M5.Lcd.println("config pin limit switches 22");
   Serial.println("config pin limit switches 22");
@@ -462,7 +462,7 @@ void buttons_test() {
     // Giro finché tieni premuto A
     while (M5.BtnA.isPressed()) {
       M5.update();  // IMPORTANTE!
-      if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+      if (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
         break;
       }
       digitalWrite(STEP_PIN, HIGH);
@@ -492,7 +492,7 @@ void buttons_test() {
 
     while (M5.BtnC.isPressed()) {
       M5.update();
-      if (digitalRead(endRun1) == LOW || digitalRead(endRun2) == LOW) {
+      if (digitalRead(END1_PIN) == LOW || digitalRead(END2_PIN) == LOW) {
         break;
       }
       digitalWrite(STEP_PIN, HIGH);
